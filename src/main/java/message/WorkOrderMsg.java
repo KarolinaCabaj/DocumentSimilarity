@@ -1,10 +1,12 @@
 package message;
 
+import algorithms.Algorithm;
+
 public class WorkOrderMsg {
     private String fileName;
-    private String alg;
+    private Algorithm alg;
 
-    public WorkOrderMsg(String fileName, String alg) {
+    public WorkOrderMsg(String fileName, Algorithm alg) {
         this.fileName = fileName;
         this.alg = alg;
     }
@@ -13,7 +15,7 @@ public class WorkOrderMsg {
         return fileName;
     }
 
-    public String getAlg() {
+    public Algorithm getAlg() {
         return alg;
     }
 }

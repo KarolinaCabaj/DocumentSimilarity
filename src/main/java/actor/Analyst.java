@@ -4,6 +4,7 @@ import akka.actor.AbstractActor;
 import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import algorithms.Algorithm;
 import message.WorkOrderMsg;
 import message.WorkResultMsg;
 
@@ -14,14 +15,25 @@ public class Analyst extends AbstractActor {
     }
 
     private LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
-
+    private Algorithm alg;
     private Analyst() {
         log.info("Waiting for work");
     }
 
     private WorkResultMsg analyzeText(WorkOrderMsg workOrderMsg) {
-        log.info("workinng");
+        log.info("working");
+        alg = workOrderMsg.getAlg();
+        preprocessText();
+        doAlgorithm();
         return new WorkResultMsg("result");
+    }
+
+    private void preprocessText(){
+
+    }
+
+    private void doAlgorithm(){
+        alg.run();
     }
 
     @Override
