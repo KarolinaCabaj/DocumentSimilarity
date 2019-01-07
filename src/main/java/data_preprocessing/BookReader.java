@@ -21,15 +21,20 @@ public class BookReader implements ChapterSplitter {
         return chapters;
     }
 
-    public void readBook() throws IOException {
-        PDDocument document = PDDocument.load(new File(this.fileName));
-        document.getNumberOfPages();
-        if (!document.isEncrypted()) {
-            PDFTextStripper stripper = new PDFTextStripper();
-            stripper.setStartPage(startPage);
-            bookContent = stripper.getText(document);
+    public void readBook() {
+        PDDocument document = null;
+        try {
+            document = PDDocument.load(new File(this.fileName));
+            document.getNumberOfPages();
+            if (!document.isEncrypted()) {
+                PDFTextStripper stripper = new PDFTextStripper();
+                stripper.setStartPage(startPage);
+                bookContent = stripper.getText(document);
+            }
+            document.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        document.close();
     }
 
     public void divideByChapters() { //todo: dla jednej ksiazki tak zrobione, rozne ksiazki rozny foramt, trzeba bedzie oddzielne parsowanie zrobic

@@ -25,7 +25,7 @@ public class Analyst extends AbstractActor {
         alg = workOrderMsg.getAlg();
         preprocessText();
         doAlgorithm();
-        return new WorkResultMsg("result");
+        return new WorkResultMsg("result", workOrderMsg);
     }
 
     private void preprocessText(){

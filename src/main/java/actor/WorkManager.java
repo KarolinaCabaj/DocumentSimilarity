@@ -7,11 +7,16 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import algorithms.LDA;
 import algorithms.LSI;
+import data_preprocessing.BookReader;
 import message.StartWorkMsg;
 import message.WorkOrderMsg;
 import message.WorkResultMsg;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -22,6 +27,12 @@ public class WorkManager extends AbstractActor {
 
     private LoggingAdapter log;
     private final List<ActorRef> analystActors;
+    private List<String> readyBooksLSI;
+    private List<String> inProgressBooksLSI;
+    private List<String> doneBooksLSI;
+    private List<String> readyBooksLDA;
+    private List<String> inProgressBooksLDA;
+    private List<String> doneBooksLDA;
     private Integer receivedResult;
 
     private WorkManager(Integer amountOfWorkers) {
@@ -37,8 +48,7 @@ public class WorkManager extends AbstractActor {
     @Override
     public Receive createReceive() {
         return receiveBuilder()
-                .match(StartWorkMsg.class, msg -> startWork()
-                )
+                .match(StartWorkMsg.class, msg -> startWork())
                 .match(WorkResultMsg.class, this::finishWork)
                 .matchAny(o -> log.info("Received unknown message"))
                 .build();
@@ -47,18 +57,70 @@ public class WorkManager extends AbstractActor {
     private void startWork() {
         log.info("Starting work...");
         receivedResult = 0;
+        initBookList();
         for (ActorRef actor : analystActors) {
-            actor.tell(analystActors.indexOf(actor) % 2 == 0 ?
-                            new WorkOrderMsg("file", new LSI()) :
-                            new WorkOrderMsg("file2", new LDA()),
-                    getSelf());
+            if (analystActors.indexOf(actor) % 2 == 0) {
+                sendLSI(actor);
+            } else {
+                sendLDA(actor);
+            }
+        }
+    }
+
+    private void initBookList() {
+        String path = new File("src/main/java/ksiazki/The Fault in Our Stars ( PDFDrive.com ).pdf").getAbsolutePath();
+        BookReader bookReader = new BookReader(path, 10);
+        bookReader.readBook();
+        bookReader.divideByChapters();
+        readyBooksLSI = Arrays.stream(bookReader.getChapters().clone()).collect(Collectors.toList());
+        inProgressBooksLSI = new ArrayList<>();
+        doneBooksLSI = new ArrayList<>();
+        readyBooksLDA = Arrays.stream(bookReader.getChapters().clone()).collect(Collectors.toList());
+        inProgressBooksLDA = new ArrayList<>();
+        doneBooksLDA = new ArrayList<>();
+    }
+
+    private void sendLSI(ActorRef actor) {
+        Random rand = new Random();
+        String book = readyBooksLSI.get(rand.nextInt(readyBooksLSI.size()));
+        if (book != null) {
+            actor.tell(new WorkOrderMsg(book, new LSI()), getSelf());
+            inProgressBooksLSI.add(book);
+            readyBooksLSI.remove(book);
+        }
+    }
+
+    private void sendLDA(ActorRef actor) {
+        Random rand = new Random();
+        String book = readyBooksLDA.get(rand.nextInt(readyBooksLDA.size()));
+        if (book != null) {
+            actor.tell(new WorkOrderMsg(book, new LDA()), getSelf());
+            inProgressBooksLDA.add(book);
+            readyBooksLDA.remove(book);
         }
     }
 
     private void finishWork(WorkResultMsg msg) {
-        getSender().tell(akka.actor.PoisonPill.getInstance(), ActorRef.noSender());
-        receivedResult++;
-        if (receivedResult == 10)
+        markOutWork(msg);
+        if (!readyBooksLSI.isEmpty()) {
+            sendLSI(getSender());
+        } else if (!readyBooksLDA.isEmpty()) {
+            sendLDA(getSender());
+        } else {
+            getSender().tell(akka.actor.PoisonPill.getInstance(), ActorRef.noSender());
+        }
+        if (inProgressBooksLSI.isEmpty() && inProgressBooksLDA.isEmpty()) {
             log.notifyInfo("Work has been done");
+        }
+    }
+
+    private void markOutWork(WorkResultMsg msg) {
+        if (msg.getWorkOrderMsg().getAlg() instanceof LSI) {
+            doneBooksLSI.add(msg.getWorkOrderMsg().getFileName());
+            inProgressBooksLSI.remove(msg.getWorkOrderMsg().getFileName());
+        } else {
+            doneBooksLDA.add(msg.getWorkOrderMsg().getFileName());
+            inProgressBooksLDA.remove(msg.getWorkOrderMsg().getFileName());
+        }
     }
 }
