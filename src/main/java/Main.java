@@ -1,25 +1,17 @@
-import actor.Analyst;
 import actor.WorkManager;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
+import message.StartWorkMsg;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class Main {
 
     public static void main(String[] args) throws IOException {
         int numberOfWorkers = 10;
         final ActorSystem system = ActorSystem.create("DocumentSimilarity");
-
-        final ActorRef workManagerActor = system.actorOf(WorkManager.props(), "Manager");
-        final List<ActorRef> analystActors = IntStream
-                .range(0, numberOfWorkers)
-                .mapToObj(n -> system.actorOf(Analyst.props(), "worker" + n))
-                .collect(Collectors.toList());
-
+        final ActorRef workManagerActor = system.actorOf(WorkManager.props(numberOfWorkers), "Manager");
+        workManagerActor.tell(new StartWorkMsg(), ActorRef.noSender());
         // TODO przenieść to poniżej do metody
 //        String path = "D:\\studia\\semestr4\\WEDT\\WordSimilarity\\src\\main\\java\\ksiazki\\The Fault in Our Stars ( PDFDrive.com ).pdf";
 //        BookReader bookReader = new BookReader(path, 10);
