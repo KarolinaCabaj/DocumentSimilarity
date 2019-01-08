@@ -3,6 +3,7 @@ package actor;
 import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
+import akka.actor.Terminated;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import algorithms.LDA;
@@ -12,10 +13,7 @@ import message.StartWorkMsg;
 import message.WorkOrderMsg;
 import message.WorkResultMsg;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -25,17 +23,18 @@ public class WorkManager extends AbstractActor {
     }
 
     private LoggingAdapter log;
-    private final List<ActorRef> analystActors;
+    private List<ActorRef> analystActors;
     private List<String> readyBooksLSI;
     private List<String> inProgressBooksLSI;
     private List<String> doneBooksLSI;
     private List<String> readyBooksLDA;
     private List<String> inProgressBooksLDA;
     private List<String> doneBooksLDA;
-    private Integer receivedResult;
+    private Map<String, WorkOrderMsg> workSchedule;
 
     private WorkManager(Integer amountOfWorkers) {
         log = Logging.getLogger(getContext().getSystem(), this);
+        workSchedule = new HashMap<>();
         analystActors = IntStream
                 .range(0, amountOfWorkers)
                 .mapToObj(n -> getContext().actorOf(Analyst.props(), "worker" + n))
@@ -49,14 +48,15 @@ public class WorkManager extends AbstractActor {
         return receiveBuilder()
                 .match(StartWorkMsg.class, msg -> startWork())
                 .match(WorkResultMsg.class, this::finishWork)
+                .match(Terminated.class, this::showMustGoOn)
                 .matchAny(o -> log.info("Received unknown message"))
                 .build();
     }
 
     private void startWork() {
         log.info("Starting work...");
-        receivedResult = 0;
         initBookList();
+        watchAnalysts();
         for (ActorRef actor : analystActors) {
             if (analystActors.indexOf(actor) % 2 == 0) {
                 sendLSI(actor);
@@ -64,6 +64,10 @@ public class WorkManager extends AbstractActor {
                 sendLDA(actor);
             }
         }
+    }
+
+    private void watchAnalysts() {
+        analystActors.forEach(actor -> context().watch(actor));
     }
 
     private void initBookList() {
@@ -81,7 +85,9 @@ public class WorkManager extends AbstractActor {
         Random rand = new Random();
         String book = readyBooksLSI.get(rand.nextInt(readyBooksLSI.size()));
         if (book != null) {
-            actor.tell(new WorkOrderMsg(book, new LSI()), getSelf());
+            WorkOrderMsg msg = new WorkOrderMsg(book, new LSI());
+            actor.tell(msg, getSelf());
+            workSchedule.put(actor.path().name(), msg);
             inProgressBooksLSI.add(book);
             readyBooksLSI.remove(book);
         }
@@ -91,7 +97,9 @@ public class WorkManager extends AbstractActor {
         Random rand = new Random();
         String book = readyBooksLDA.get(rand.nextInt(readyBooksLDA.size()));
         if (book != null) {
-            actor.tell(new WorkOrderMsg(book, new LDA()), getSelf());
+            WorkOrderMsg msg = new WorkOrderMsg(book, new LDA());
+            actor.tell(msg, getSelf());
+            workSchedule.put(actor.path().name(), msg);
             inProgressBooksLDA.add(book);
             readyBooksLDA.remove(book);
         }
@@ -119,5 +127,21 @@ public class WorkManager extends AbstractActor {
             doneBooksLDA.add(msg.getWorkOrderMsg().getFileName());
             inProgressBooksLDA.remove(msg.getWorkOrderMsg().getFileName());
         }
+    }
+
+    private void showMustGoOn(Terminated terminated) {
+        System.out.println("fuck");
+        String name = terminated.actor().path().name();
+        backToWork(name);
+    }
+
+    private void backToWork(String name) {
+        analystActors = analystActors.stream()
+                .filter(actor -> !actor.path().name().equals(name))
+                .collect(Collectors.toList());
+        ActorRef actor = getContext().actorOf(Analyst.props(), name);
+        context().watch(actor);
+        analystActors.add(actor);
+        actor.tell(workSchedule.get(name), getSelf());
     }
 }

@@ -3,11 +3,9 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import message.StartWorkMsg;
 
-import java.io.IOException;
-
 public class Main {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         int numberOfWorkers = 10;
         final ActorSystem system = ActorSystem.create("DocumentSimilarity");
         final ActorRef workManagerActor = system.actorOf(WorkManager.props(numberOfWorkers), "Manager");
