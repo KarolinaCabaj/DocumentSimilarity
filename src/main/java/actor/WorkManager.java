@@ -12,7 +12,6 @@ import message.StartWorkMsg;
 import message.WorkOrderMsg;
 import message.WorkResultMsg;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -68,14 +67,12 @@ public class WorkManager extends AbstractActor {
     }
 
     private void initBookList() {
-        String path = new File("src/main/java/ksiazki/The Fault in Our Stars ( PDFDrive.com ).pdf").getAbsolutePath();
+        String path = "src/main/java/ksiazki/The Fault in Our Stars ( PDFDrive.com ).pdf";
         BookReader bookReader = new BookReader(path, 10);
-        bookReader.readBook();
-        bookReader.divideByChapters();
-        readyBooksLSI = Arrays.stream(bookReader.getChapters().clone()).collect(Collectors.toList());
+        readyBooksLSI = Arrays.stream(bookReader.getChapters()).collect(Collectors.toList());
         inProgressBooksLSI = new ArrayList<>();
         doneBooksLSI = new ArrayList<>();
-        readyBooksLDA = Arrays.stream(bookReader.getChapters().clone()).collect(Collectors.toList());
+        readyBooksLDA = Arrays.stream(bookReader.getChapters()).collect(Collectors.toList());
         inProgressBooksLDA = new ArrayList<>();
         doneBooksLDA = new ArrayList<>();
     }

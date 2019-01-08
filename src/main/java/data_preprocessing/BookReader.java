@@ -7,24 +7,26 @@ import java.io.File;
 import java.io.IOException;
 
 public class BookReader implements ChapterSplitter {
-    private String fileName;
+    private String absoluteFilePath;
     private String bookContent;
     private Integer startPage;
     private String[] chapters;
 
-    public BookReader(String fileName, Integer startPage){
-        this.fileName = fileName;
+    public BookReader(String relativeFilePath, Integer startPage){
+        this.absoluteFilePath = new File(relativeFilePath).getAbsolutePath();
         this.startPage = startPage;
+        readBook();
+        divideByChapters();
     }
 
     public String[] getChapters() {
         return chapters;
     }
 
-    public void readBook() {
+    private void readBook() {
         PDDocument document = null;
         try {
-            document = PDDocument.load(new File(this.fileName));
+            document = PDDocument.load(new File(this.absoluteFilePath));
             document.getNumberOfPages();
             if (!document.isEncrypted()) {
                 PDFTextStripper stripper = new PDFTextStripper();
