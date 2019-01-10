@@ -10,7 +10,7 @@ public class Main {
         final ActorSystem system = ActorSystem.create("DocumentSimilarity");
         final ActorRef workManagerActor = system.actorOf(WorkManager.props(numberOfWorkers), "Manager");
         workManagerActor.tell(
-                new StartWorkMsg("src/main/java/ksiazki/The Fault in Our Stars ( PDFDrive.com ).pdf"),
+                new StartWorkMsg("src/main/java/ksiazki/urls.txt"),
                 ActorRef.noSender());
         // TODO przenieść to poniżej do metody
 //        String path = "D:\\studia\\semestr4\\WEDT\\WordSimilarity\\src\\main\\java\\ksiazki\\The Fault in Our Stars ( PDFDrive.com ).pdf";

@@ -1,14 +1,12 @@
 package actor;
 
-import akka.actor.AbstractActor;
-import akka.actor.ActorRef;
-import akka.actor.Props;
-import akka.actor.Terminated;
+import akka.actor.*;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import algorithms.LDA;
 import algorithms.LSI;
-import data_preprocessing.BookReader;
+import downloader.UrlLoader;
+import downloader.WikiDownloader;
 import message.StartWorkMsg;
 import message.WorkOrderMsg;
 import message.WorkResultMsg;
@@ -73,11 +71,12 @@ public class WorkManager extends AbstractActor {
     }
 
     private void initBookList() {
-        BookReader bookReader = new BookReader(filePath, 10);
-        readyBooksLSI = Arrays.stream(bookReader.getChapters()).collect(Collectors.toList());
+        UrlLoader ul = new UrlLoader(filePath);
+        String[] pages = new WikiDownloader(ul.getUrls()).getPages();
+        readyBooksLSI = Arrays.stream(pages).collect(Collectors.toList());
         inProgressBooksLSI = new ArrayList<>();
         doneBooksLSI = new ArrayList<>();
-        readyBooksLDA = Arrays.stream(bookReader.getChapters()).collect(Collectors.toList());
+        readyBooksLDA = Arrays.stream(pages).collect(Collectors.toList());
         inProgressBooksLDA = new ArrayList<>();
         doneBooksLDA = new ArrayList<>();
     }
@@ -112,11 +111,10 @@ public class WorkManager extends AbstractActor {
             sendLSI(getSender());
         } else if (!readyBooksLDA.isEmpty()) {
             sendLDA(getSender());
-        } else {
-            getSender().tell(akka.actor.PoisonPill.getInstance(), ActorRef.noSender());
         }
         if (inProgressBooksLSI.isEmpty() && inProgressBooksLDA.isEmpty()) {
             log.notifyInfo("Work has been done");
+            getContext().getChildren().forEach(this::sayGoodBay);
             context().system().terminate();
         }
     }
@@ -129,6 +127,11 @@ public class WorkManager extends AbstractActor {
             doneBooksLDA.add(msg.getWorkOrderMsg().getFileName());
             inProgressBooksLDA.remove(msg.getWorkOrderMsg().getFileName());
         }
+    }
+
+    private void sayGoodBay(ActorRef actor) {
+        getContext().unwatch(actor);
+        actor.tell(PoisonPill.getInstance(), ActorRef.noSender());
     }
 
     private void showMustGoOn(Terminated terminated) {
