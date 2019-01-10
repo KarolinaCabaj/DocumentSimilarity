@@ -23,6 +23,7 @@ public class WorkManager extends AbstractActor {
     }
 
     private LoggingAdapter log;
+    private String filePath;
     private List<ActorRef> analystActors;
     private List<String> readyBooksLSI;
     private List<String> inProgressBooksLSI;
@@ -46,15 +47,16 @@ public class WorkManager extends AbstractActor {
     @Override
     public Receive createReceive() {
         return receiveBuilder()
-                .match(StartWorkMsg.class, msg -> startWork())
+                .match(StartWorkMsg.class, this::startWork)
                 .match(WorkResultMsg.class, this::finishWork)
                 .match(Terminated.class, this::showMustGoOn)
                 .matchAny(o -> log.info("Received unknown message"))
                 .build();
     }
 
-    private void startWork() {
+    private void startWork(StartWorkMsg msg) {
         log.info("Starting work...");
+        filePath = msg.getPath();
         initBookList();
         watchAnalysts();
         for (ActorRef actor : analystActors) {
@@ -71,8 +73,7 @@ public class WorkManager extends AbstractActor {
     }
 
     private void initBookList() {
-        String path = "src/main/java/ksiazki/The Fault in Our Stars ( PDFDrive.com ).pdf";
-        BookReader bookReader = new BookReader(path, 10);
+        BookReader bookReader = new BookReader(filePath, 10);
         readyBooksLSI = Arrays.stream(bookReader.getChapters()).collect(Collectors.toList());
         inProgressBooksLSI = new ArrayList<>();
         doneBooksLSI = new ArrayList<>();
@@ -116,6 +117,7 @@ public class WorkManager extends AbstractActor {
         }
         if (inProgressBooksLSI.isEmpty() && inProgressBooksLDA.isEmpty()) {
             log.notifyInfo("Work has been done");
+            context().system().terminate();
         }
     }
 

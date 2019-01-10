@@ -1,9 +1,14 @@
 package message;
 
 public class StartWorkMsg {
-    private String startMsg;
+    private String path;
 
-    public StartWorkMsg() {
-        this.startMsg = "start";
+    public StartWorkMsg(String path) {
+        this.path = path;
     }
+
+    public String getPath() {
+        return path;
+    }
+
 }

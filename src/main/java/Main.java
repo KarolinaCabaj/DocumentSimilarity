@@ -9,7 +9,9 @@ public class Main {
         int numberOfWorkers = 10;
         final ActorSystem system = ActorSystem.create("DocumentSimilarity");
         final ActorRef workManagerActor = system.actorOf(WorkManager.props(numberOfWorkers), "Manager");
-        workManagerActor.tell(new StartWorkMsg(), ActorRef.noSender());
+        workManagerActor.tell(
+                new StartWorkMsg("src/main/java/ksiazki/The Fault in Our Stars ( PDFDrive.com ).pdf"),
+                ActorRef.noSender());
         // TODO przenieść to poniżej do metody
 //        String path = "D:\\studia\\semestr4\\WEDT\\WordSimilarity\\src\\main\\java\\ksiazki\\The Fault in Our Stars ( PDFDrive.com ).pdf";
 //        BookReader bookReader = new BookReader(path, 10);
