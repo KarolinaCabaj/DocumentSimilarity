@@ -5,7 +5,6 @@ import org.jsoup.nodes.Document;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class WikiDownloader {
@@ -43,6 +42,6 @@ public class WikiDownloader {
     }
 
     public String[] getPages() {
-        return pages.stream().toArray(String[]::new);
+        return pages.toArray(new String[0]);
     }
 }
