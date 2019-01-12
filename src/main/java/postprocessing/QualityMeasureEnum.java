@@ -1,9 +1,9 @@
 package postprocessing;
 
-public enum QualityMeasure {
+public enum QualityMeasureEnum {
     GREAT, GOOD, BAD;
 
-    public static QualityMeasure getQualityMeasure(Float value) {
+    public static QualityMeasureEnum getQualityMeasure(Float value) {
         if (value < 1.0)
             return GREAT;
         else if (value < 3.0)
