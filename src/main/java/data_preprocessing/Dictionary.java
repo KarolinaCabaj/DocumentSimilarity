@@ -1,6 +1,6 @@
 package data_preprocessing;
 
 public interface Dictionary {
-    Integer getTermIndex(String term);
-    int getNumTerms();
+    Integer getTermOccurrences(String term);
+    int getNumberOfTerms();
 }

@@ -5,33 +5,40 @@ import java.util.Map;
 
 public class TermDictionary implements Dictionary {
 
-    private final Map<String, Integer> indexedTerms;
-    private int counter;
+    private final HashMap<String, Integer> occurrencesOfTerms;
+    private final String[] terms;
 
-    public TermDictionary() {
-        indexedTerms = new HashMap<String, Integer>();
-        counter = 0;
+    TermDictionary(String[] terms) {
+        this.terms = terms;
+        occurrencesOfTerms = new HashMap<String, Integer>();
+        addTerms();
+    }
+
+    HashMap<String, Integer> getOccurrencesOfTerms() {
+        return occurrencesOfTerms;
     }
 
     private void addTerm(String term) {
-        if(!indexedTerms.containsKey(term)) {
-            indexedTerms.put(term, counter++);
+        if (occurrencesOfTerms.containsKey(term)) {
+            occurrencesOfTerms.put(term, occurrencesOfTerms.get(term) + 1);
+        } else {
+            occurrencesOfTerms.put(term, 1);
         }
     }
 
-    public void addTerms(String[] terms) {
+    private void addTerms() {
         for (String term : terms) {
             addTerm(term);
         }
     }
 
     @Override
-    public Integer getTermIndex(String term) {
-        return indexedTerms.get(term);
+    public Integer getTermOccurrences(String term) {
+        return occurrencesOfTerms.get(term);
     }
 
     @Override
-    public int getNumTerms() {
-        return indexedTerms.size();
+    public int getNumberOfTerms() {
+        return occurrencesOfTerms.size();
     }
 }
