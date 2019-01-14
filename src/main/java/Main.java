@@ -1,18 +1,7 @@
 import actor.WorkManager;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
-import algorithms.LSI;
-import data_preprocessing.TestingWordsConverter;
-import data_preprocessing.TextPreprocessor;
-import data_preprocessing.Vectorizer;
 import message.StartWorkMsg;
-import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.linear.RealVector;
-import postprocessing.QualityMeasureEnum;
-import postprocessing.ResultEvaluator;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class Main {
 

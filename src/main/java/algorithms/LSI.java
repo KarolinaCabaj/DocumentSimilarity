@@ -1,29 +1,29 @@
 package algorithms;
 
 import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.apache.commons.lang3.ObjectUtils.min;
 
 public class LSI {
     private int valueK;
-    private ArrayList<String> terms;
     private SingularValueDecomposition svd;
     private RealMatrix matrix;
     private RealMatrix leftSingularMatrix;
     private RealMatrix singularValueMatrix;
     private RealMatrix rightSingularMatrixTransposed;
-    private RealMatrix wordsVectors;
+    private RealMatrix wordsMatrix;
 
-    public LSI(RealMatrix matrix, int valueK, ArrayList<String> terms) {
+    public LSI(RealMatrix matrix, int valueK) {
         this.valueK = valueK;
-        this.terms = terms;
         this.matrix = matrix;
         this.svd = new SingularValueDecomposition(this.matrix);
+        performSingularValueDecomposition();
+        createWordRepresentation();
+    }
+
+    public RealMatrix getWordsMatrix() {
+        return wordsMatrix;
     }
 
     public void performSingularValueDecomposition() {
@@ -56,46 +56,7 @@ public class LSI {
         }
     }
 
-    public void wordRepresentation() {
-        wordsVectors = leftSingularMatrix.multiply(singularValueMatrix);
-    }
-
-    public ArrayList<Double> getDifferences(List<String[]> testingData) {
-        ArrayList<Double> differences = new ArrayList<>();
-        for (String[] data : testingData) {
-            double similarity = getCosineSimilarity(data[0], data[1]);
-            if (similarity != -1) {
-                Double difference = computeDifference(similarity, data[2]);
-                differences.add(difference);
-            }
-        }
-        return differences;
-    }
-
-    private Double computeDifference(double computedValue, String testingValue) {
-        Double testing = Double.parseDouble(testingValue);
-        return Math.abs(computedValue - testing);
-    }
-
-    private double getCosineSimilarity(String firstTerm, String secondTerm) {
-        if (matrixContainsTerms(firstTerm, secondTerm)) {
-            return computeCosineSimilarity(firstTerm, secondTerm);
-        } else
-            return -1;
-    }
-
-    private boolean matrixContainsTerms(String firstTerm, String secondTerm) {
-        return terms.contains(firstTerm) && terms.contains(secondTerm);
-    }
-
-    private double computeCosineSimilarity(String firstTerm, String secondTerm) {
-        RealVector firstTermVector = getVector(firstTerm);
-        RealVector secondTermVector = getVector(secondTerm);
-        return firstTermVector.cosine(secondTermVector) * 10;
-    }
-
-    private RealVector getVector(String term) {
-        int termIndex = terms.indexOf(term);
-        return wordsVectors.getRowVector(termIndex);
+    private void createWordRepresentation() {
+        wordsMatrix = leftSingularMatrix.multiply(singularValueMatrix);
     }
 }

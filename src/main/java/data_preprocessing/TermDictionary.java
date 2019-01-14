@@ -1,20 +1,19 @@
 package data_preprocessing;
 
 import java.util.HashMap;
-import java.util.Map;
 
 public class TermDictionary implements Dictionary {
 
     private final HashMap<String, Integer> occurrencesOfTerms;
     private final String[] terms;
 
-    TermDictionary(String[] terms) {
+    public TermDictionary(String[] terms) {
         this.terms = terms;
         occurrencesOfTerms = new HashMap<String, Integer>();
         addTerms();
     }
 
-    HashMap<String, Integer> getOccurrencesOfTerms() {
+    public HashMap<String, Integer> getOccurrencesOfTerms() {
         return occurrencesOfTerms;
     }
 

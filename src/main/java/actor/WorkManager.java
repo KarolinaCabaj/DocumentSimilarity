@@ -102,7 +102,7 @@ public class WorkManager extends AbstractActor {
         Random rand = new Random();
         String book = readyBooksLSI.get(rand.nextInt(readyBooksLSI.size()));
         if (book != null) {
-            WorkOrderMsg msg = new WorkOrderMsg(book, WorkOrderMsg.WorkType.LSI, terms );
+            WorkOrderMsg msg = new WorkOrderMsg(book, WorkOrderMsg.WorkType.LSI, terms);
             actor.tell(msg, getSelf());
             workSchedule.put(actor.path().name(), msg);
             inProgressBooksLSI.add(book);

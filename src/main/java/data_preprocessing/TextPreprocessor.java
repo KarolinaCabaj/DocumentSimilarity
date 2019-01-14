@@ -1,10 +1,8 @@
 package data_preprocessing;
 
-import opennlp.tools.lemmatizer.DictionaryLemmatizer;
-import opennlp.tools.postag.POSModel;
-import opennlp.tools.postag.POSTaggerME;
 import opennlp.tools.tokenize.SimpleTokenizer;
 import opennlp.tools.tokenize.Tokenizer;
+
 import java.util.regex.Pattern;
 
 public class TextPreprocessor {
