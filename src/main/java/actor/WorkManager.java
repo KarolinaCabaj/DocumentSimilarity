@@ -3,8 +3,8 @@ package actor;
 import akka.actor.*;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import algorithms.LDA;
-import algorithms.LSI;
+import data_preprocessing.TextPreprocessor;
+import data_preprocessing.Vectorizer;
 import downloader.UrlLoader;
 import downloader.WikiDownloader;
 import message.StartWorkMsg;
@@ -30,6 +30,7 @@ public class WorkManager extends AbstractActor {
     private List<String> inProgressBooksLDA;
     private List<String> doneBooksLDA;
     private Map<String, WorkOrderMsg> workSchedule;
+    private List<String> terms;
 
     private WorkManager(Integer amountOfWorkers) {
         log = Logging.getLogger(getContext().getSystem(), this);
@@ -73,6 +74,7 @@ public class WorkManager extends AbstractActor {
     private void initBookList() {
         UrlLoader ul = new UrlLoader(filePath);
         String[] pages = new WikiDownloader(ul.getUrls()).getPages();
+        setTerms(pages);
         readyBooksLSI = Arrays.stream(pages).collect(Collectors.toList());
         inProgressBooksLSI = new ArrayList<>();
         doneBooksLSI = new ArrayList<>();
@@ -81,11 +83,26 @@ public class WorkManager extends AbstractActor {
         doneBooksLDA = new ArrayList<>();
     }
 
+    private void setTerms(String[] pages) {
+        TextPreprocessor textPreprocessor = new TextPreprocessor();
+        List<String[]> listOfDocumentsTerms = createLisOfDocumentTerms(pages, textPreprocessor);
+        terms = new Vectorizer(listOfDocumentsTerms).getTerms();
+    }
+
+    private List<String[]> createLisOfDocumentTerms(String[] pages, TextPreprocessor textPreprocessor) {
+        List<String[]> listOfDocumentsTerms = new ArrayList<>();
+        for (String document : pages) {
+            String[] tokens = textPreprocessor.getPreparedTokens(document);
+            listOfDocumentsTerms.add(tokens);
+        }
+        return listOfDocumentsTerms;
+    }
+
     private void sendLSI(ActorRef actor) {
         Random rand = new Random();
         String book = readyBooksLSI.get(rand.nextInt(readyBooksLSI.size()));
         if (book != null) {
-            WorkOrderMsg msg = new WorkOrderMsg(book, new LSI());
+            WorkOrderMsg msg = new WorkOrderMsg(book, WorkOrderMsg.WorkType.LSI, terms );
             actor.tell(msg, getSelf());
             workSchedule.put(actor.path().name(), msg);
             inProgressBooksLSI.add(book);
@@ -97,11 +114,11 @@ public class WorkManager extends AbstractActor {
         Random rand = new Random();
         String book = readyBooksLDA.get(rand.nextInt(readyBooksLDA.size()));
         if (book != null) {
-            WorkOrderMsg msg = new WorkOrderMsg(book, new LDA());
-            actor.tell(msg, getSelf());
-            workSchedule.put(actor.path().name(), msg);
-            inProgressBooksLDA.add(book);
-            readyBooksLDA.remove(book);
+//            WorkOrderMsg msg = new WorkOrderMsg(book, new LDA());
+//            actor.tell(msg, getSelf());
+//            workSchedule.put(actor.path().name(), msg);
+//            inProgressBooksLDA.add(book);
+//            readyBooksLDA.remove(book);
         }
     }
 
@@ -120,12 +137,12 @@ public class WorkManager extends AbstractActor {
     }
 
     private void markOutWork(WorkResultMsg msg) {
-        if (msg.getWorkOrderMsg().getAlg() instanceof LSI) {
-            doneBooksLSI.add(msg.getWorkOrderMsg().getFileName());
-            inProgressBooksLSI.remove(msg.getWorkOrderMsg().getFileName());
+        if (msg.getWorkOrderMsg().getWorkType().equals(WorkOrderMsg.WorkType.LSI)) {
+            doneBooksLSI.add(msg.getWorkOrderMsg().getDoc());
+            inProgressBooksLSI.remove(msg.getWorkOrderMsg().getDoc());
         } else {
-            doneBooksLDA.add(msg.getWorkOrderMsg().getFileName());
-            inProgressBooksLDA.remove(msg.getWorkOrderMsg().getFileName());
+            doneBooksLDA.add(msg.getWorkOrderMsg().getDoc());
+            inProgressBooksLDA.remove(msg.getWorkOrderMsg().getDoc());
         }
     }
 

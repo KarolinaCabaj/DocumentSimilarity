@@ -9,7 +9,7 @@ import java.util.List;
 
 import static org.apache.commons.lang3.ObjectUtils.min;
 
-public class LSI implements Algorithm {
+public class LSI {
     private int valueK;
     private ArrayList<String> terms;
     private SingularValueDecomposition svd;
@@ -26,10 +26,6 @@ public class LSI implements Algorithm {
         this.svd = new SingularValueDecomposition(this.matrix);
     }
 
-    //todo usunać na koniec - na potrzeby działania szkieletu aktorów
-    public LSI() {
-    }
-
     public void performSingularValueDecomposition() {
         leftSingularMatrix = svd.getU();
         singularValueMatrix = svd.getS();
@@ -41,11 +37,6 @@ public class LSI implements Algorithm {
             valueK = min(matrix.getColumnDimension(), matrix.getRowDimension());
             reduceMatrices();
         }
-    }
-
-    @Override
-    public void run() {
-
     }
 
     private void reduceMatrices() {
@@ -69,12 +60,11 @@ public class LSI implements Algorithm {
         wordsVectors = leftSingularMatrix.multiply(singularValueMatrix);
     }
 
-    public ArrayList<Double> getDifferences(List<String[]> testingData){
+    public ArrayList<Double> getDifferences(List<String[]> testingData) {
         ArrayList<Double> differences = new ArrayList<>();
-        for(String[] data: testingData){
+        for (String[] data : testingData) {
             double similarity = getCosineSimilarity(data[0], data[1]);
-            if(similarity != -1)
-            {
+            if (similarity != -1) {
                 Double difference = computeDifference(similarity, data[2]);
                 differences.add(difference);
             }
@@ -82,7 +72,7 @@ public class LSI implements Algorithm {
         return differences;
     }
 
-    private Double computeDifference(double computedValue, String testingValue){
+    private Double computeDifference(double computedValue, String testingValue) {
         Double testing = Double.parseDouble(testingValue);
         return Math.abs(computedValue - testing);
     }

@@ -4,9 +4,9 @@ import akka.actor.AbstractActor;
 import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import algorithms.Algorithm;
 import message.WorkOrderMsg;
 import message.WorkResultMsg;
+import org.apache.commons.math3.linear.ArrayRealVector;
 
 public class Analyst extends AbstractActor {
 
@@ -15,26 +15,17 @@ public class Analyst extends AbstractActor {
     }
 
     private LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
-    private Algorithm alg;
+
     private Analyst() {
         log.info("Waiting for work");
     }
 
     private WorkResultMsg analyzeText(WorkOrderMsg workOrderMsg) {
         log.info("working");
-        alg = workOrderMsg.getAlg();
-        preprocessText();
-        doAlgorithm();
-        return new WorkResultMsg("result", workOrderMsg);
+
+        return new WorkResultMsg(new ArrayRealVector(), workOrderMsg);
     }
 
-    private void preprocessText(){
-
-    }
-
-    private void doAlgorithm(){
-        alg.run();
-    }
 
     @Override
     public Receive createReceive() {

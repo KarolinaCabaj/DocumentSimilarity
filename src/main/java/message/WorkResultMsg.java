@@ -1,15 +1,17 @@
 package message;
 
+import org.apache.commons.math3.linear.RealVector;
+
 public class WorkResultMsg {
-    private String result;
+    private RealVector result;
     private WorkOrderMsg workOrderMsg;
 
-    public WorkResultMsg(String result, WorkOrderMsg workOrderMsg) {
+    public WorkResultMsg(RealVector result, WorkOrderMsg workOrderMsg) {
         this.result = result;
         this.workOrderMsg = workOrderMsg;
     }
 
-    public String getResult() {
+    public RealVector getResult() {
         return result;
     }
 
