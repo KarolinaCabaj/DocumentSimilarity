@@ -1,8 +1,6 @@
 package postprocessing;
 
-import algorithms.LSI;
 import data_preprocessing.TestingWordsConverter;
-import data_preprocessing.Vectorizer;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
@@ -12,13 +10,13 @@ import java.util.List;
 public class ResultEvaluator {
     private ArrayList<QualityMeasureEnum> qualityResults = new ArrayList<>();
     private ArrayList<Double> differences;
-    private ArrayList<String> terms;
+    private List<String> terms;
     private RealMatrix wordsMatrix;
 
 
-    public ResultEvaluator(Vectorizer vectorizer, LSI lsi) {
-        this.terms = vectorizer.getTerms();
-        this.wordsMatrix = lsi.getWordsMatrix();
+    public ResultEvaluator(List<String> terms, RealMatrix wordsMatrix) {
+        this.terms = terms;
+        this.wordsMatrix = wordsMatrix;
         TestingWordsConverter testingWordsConverter = new TestingWordsConverter();
         List<String[]> testingData = testingWordsConverter.getParsedTestingData();
         this.differences = getDifferences(testingData);
@@ -67,10 +65,10 @@ public class ResultEvaluator {
     public void showEvaluationResults(QualityMeasureEnum measureClass) {
 
         int numberOfElementInClass = countQualityClassElements(measureClass);
-        System.out.println(numberOfElementInClass);
+        System.out.println(measureClass.toString() + " contains " + numberOfElementInClass + " elements.");
 
         double percentage = percentage(measureClass);
-        System.out.println("Greats percentage: " + percentage + "%");
+        System.out.println(measureClass.toString() + " percentage: " + percentage + "%");
     }
 
     private void evaluateQuality() {

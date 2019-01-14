@@ -12,7 +12,8 @@ public class TestingWordsConverter {
     private String fileName;
 
     public TestingWordsConverter() {
-        fileName = "C:\\Users\\Karola\\Desktop\\WordSimilarity_kopia\\src\\main\\java\\data_preprocessing\\testing_words_pairs.txt";
+        String relativeFilePath = "src/main/java/data_preprocessing/testing_words_pairs.txt";
+        fileName = new File(relativeFilePath).getAbsolutePath();
     }
 
 

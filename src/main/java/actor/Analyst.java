@@ -5,6 +5,7 @@ import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import data_preprocessing.TermDictionary;
+import data_preprocessing.TextPreprocessor;
 import message.WorkOrderMsg;
 import message.WorkResultMsg;
 import org.apache.commons.math3.linear.ArrayRealVector;
@@ -15,23 +16,36 @@ import java.util.List;
 
 public class Analyst extends AbstractActor {
 
-    static Props props() {
-        return Props.create(Analyst.class, Analyst::new);
-    }
-
     private LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
 
     private Analyst() {
         log.info("Waiting for work");
     }
 
-    private WorkResultMsg analyzeText(WorkOrderMsg workOrderMsg) {
-        log.info("working");
-
-        return new WorkResultMsg(new ArrayRealVector(), workOrderMsg);
+    static Props props() {
+        return Props.create(Analyst.class, Analyst::new);
     }
 
-    public RealVector createOccurrenceVector(String[] tokens, List<String> terms) {
+    private WorkResultMsg analyzeText(WorkOrderMsg workOrderMsg) {
+        if (workOrderMsg.getWorkType().equals(WorkOrderMsg.WorkType.LSI)) {
+            log.info("working for LSI");
+            return new WorkResultMsg(getVector(workOrderMsg), workOrderMsg);
+        } else {
+            log.info("working for LDA");
+            return new WorkResultMsg(new ArrayRealVector(), workOrderMsg);
+        }
+    }
+
+    private RealVector getVector(WorkOrderMsg workOrderMsg) {
+        TextPreprocessor textPreprocessor = new TextPreprocessor();
+        RealVector vector = createOccurrenceVector(
+                textPreprocessor.getPreparedTokens(workOrderMsg.getDoc()),
+                workOrderMsg.getTerms());
+        return vector;
+    }
+
+
+    private RealVector createOccurrenceVector(String[] tokens, List<String> terms) {
         RealVector vec = new ArrayRealVector(terms.size());
         TermDictionary termDictionary = new TermDictionary(tokens);
         HashMap<String, Integer> termsOccurrences = termDictionary.getOccurrencesOfTerms();

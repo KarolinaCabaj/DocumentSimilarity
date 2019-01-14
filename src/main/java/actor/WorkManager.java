@@ -3,6 +3,7 @@ package actor;
 import akka.actor.*;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import algorithms.LSI;
 import data_preprocessing.TextPreprocessor;
 import data_preprocessing.Vectorizer;
 import downloader.UrlLoader;
@@ -10,16 +11,16 @@ import downloader.WikiDownloader;
 import message.StartWorkMsg;
 import message.WorkOrderMsg;
 import message.WorkResultMsg;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.RealVector;
+import postprocessing.QualityMeasureEnum;
+import postprocessing.ResultEvaluator;
 
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class WorkManager extends AbstractActor {
-    static public Props props(Integer amountOfWorkers) {
-        return Props.create(WorkManager.class, () -> new WorkManager(amountOfWorkers));
-    }
-
     private LoggingAdapter log;
     private String filePath;
     private List<ActorRef> analystActors;
@@ -31,7 +32,8 @@ public class WorkManager extends AbstractActor {
     private List<String> doneBooksLDA;
     private Map<String, WorkOrderMsg> workSchedule;
     private List<String> terms;
-
+    private Vectorizer vectorizer;
+    private List<RealVector> documentVectors;
     private WorkManager(Integer amountOfWorkers) {
         log = Logging.getLogger(getContext().getSystem(), this);
         workSchedule = new HashMap<>();
@@ -42,12 +44,15 @@ public class WorkManager extends AbstractActor {
         log.info("Waiting for order");
     }
 
+    static public Props props(Integer amountOfWorkers) {
+        return Props.create(WorkManager.class, () -> new WorkManager(amountOfWorkers));
+    }
 
     @Override
     public Receive createReceive() {
         return receiveBuilder()
                 .match(StartWorkMsg.class, this::startWork)
-                .match(WorkResultMsg.class, this::finishWork)
+                .match(WorkResultMsg.class, this::finishPrimaryWork)
                 .match(Terminated.class, this::showMustGoOn)
                 .matchAny(o -> log.info("Received unknown message"))
                 .build();
@@ -55,6 +60,7 @@ public class WorkManager extends AbstractActor {
 
     private void startWork(StartWorkMsg msg) {
         log.info("Starting work...");
+        documentVectors = new ArrayList<>();
         filePath = msg.getPath();
         initBookList();
         watchAnalysts();
@@ -86,7 +92,8 @@ public class WorkManager extends AbstractActor {
     private void setTerms(String[] pages) {
         TextPreprocessor textPreprocessor = new TextPreprocessor();
         List<String[]> listOfDocumentsTerms = createLisOfDocumentTerms(pages, textPreprocessor);
-        terms = new Vectorizer(listOfDocumentsTerms).getTerms();
+        vectorizer = new Vectorizer(listOfDocumentsTerms);
+        terms = vectorizer.getTerms();
     }
 
     private List<String[]> createLisOfDocumentTerms(String[] pages, TextPreprocessor textPreprocessor) {
@@ -122,22 +129,41 @@ public class WorkManager extends AbstractActor {
         }
     }
 
-    private void finishWork(WorkResultMsg msg) {
+    private void finishPrimaryWork(WorkResultMsg msg) {
         markOutWork(msg);
         if (!readyBooksLSI.isEmpty()) {
             sendLSI(getSender());
         } else if (!readyBooksLDA.isEmpty()) {
             sendLDA(getSender());
         }
-        if (inProgressBooksLSI.isEmpty() && inProgressBooksLDA.isEmpty()) {
-            log.notifyInfo("Work has been done");
-            getContext().getChildren().forEach(this::sayGoodBay);
-            context().system().terminate();
+        if (inProgressBooksLSI.isEmpty() && readyBooksLSI.isEmpty()) {
+            doLsi();
+
+        } else if (readyBooksLDA.isEmpty() && inProgressBooksLDA.isEmpty()) {
+
         }
+//        else if() {
+//            log.notifyInfo("Work has been done");
+//            getContext().getChildren().forEach(this::sayGoodBay);
+//            context().system().terminate();
+//        }
+    }
+
+    private void doLsi() {
+        RealMatrix countMatrix = vectorizer.getCountMatrix(documentVectors);
+        LSI lsi = new LSI(countMatrix, 7);
+        RealMatrix wordsMatrix = lsi.getWordsMatrix();
+        ResultEvaluator ev = new ResultEvaluator(terms, wordsMatrix);
+        ev.showAverage();
+        ev.showEvaluationResults(QualityMeasureEnum.BAD);
+        ev.showEvaluationResults(QualityMeasureEnum.GOOD);
+        ev.showEvaluationResults(QualityMeasureEnum.GREAT);
+        log.info("work has been done");
     }
 
     private void markOutWork(WorkResultMsg msg) {
         if (msg.getWorkOrderMsg().getWorkType().equals(WorkOrderMsg.WorkType.LSI)) {
+            documentVectors.add(msg.getResult());
             doneBooksLSI.add(msg.getWorkOrderMsg().getDoc());
             inProgressBooksLSI.remove(msg.getWorkOrderMsg().getDoc());
         } else {

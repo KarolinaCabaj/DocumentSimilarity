@@ -7,10 +7,6 @@ public class WorkOrderMsg {
     private WorkType workType;
     private List<String> terms;
 
-    public enum WorkType {
-        LSI, LDA
-    }
-
     public WorkOrderMsg(String doc, WorkType workType, List<String> terms) {
         this.doc = doc;
         this.workType = workType;
@@ -21,12 +17,15 @@ public class WorkOrderMsg {
         return doc;
     }
 
-
     public WorkType getWorkType() {
         return workType;
     }
 
     public List<String> getTerms() {
         return terms;
+    }
+
+    public enum WorkType {
+        LSI, LDA
     }
 }
