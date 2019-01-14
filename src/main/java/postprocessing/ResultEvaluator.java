@@ -68,7 +68,7 @@ public class ResultEvaluator {
         System.out.println(measureClass.toString() + " contains " + numberOfElementInClass + " elements.");
 
         double percentage = percentage(measureClass);
-        System.out.println(measureClass.toString() + " percentage: " + percentage + "%");
+        System.out.println(measureClass.toString() + " percentage: " + Math.round(percentage*100.0)/100.0 + "%");
     }
 
     private void evaluateQuality() {

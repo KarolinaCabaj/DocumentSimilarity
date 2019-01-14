@@ -151,7 +151,7 @@ public class WorkManager extends AbstractActor {
 
     private void doLsi() {
         RealMatrix countMatrix = vectorizer.getCountMatrix(documentVectors);
-        LSI lsi = new LSI(countMatrix, 7);
+        LSI lsi = new LSI(countMatrix, 15);
         RealMatrix wordsMatrix = lsi.getWordsMatrix();
         ResultEvaluator ev = new ResultEvaluator(terms, wordsMatrix);
         ev.showAverage();
