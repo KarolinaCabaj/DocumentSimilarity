@@ -26,14 +26,15 @@ public class WorkManager extends AbstractActor {
     private List<ActorRef> analystActors;
     private List<String> readyBooksLSI;
     private List<String> inProgressBooksLSI;
-    private List<String> doneBooksLSI;
     private List<String> readyBooksLDA;
     private List<String> inProgressBooksLDA;
-    private List<String> doneBooksLDA;
     private Map<String, WorkOrderMsg> workSchedule;
     private List<String> terms;
     private Vectorizer vectorizer;
     private List<RealVector> documentVectors;
+    private Boolean isLSIdone = false;
+    private Boolean isLDAdone = false;
+
     private WorkManager(Integer amountOfWorkers) {
         log = Logging.getLogger(getContext().getSystem(), this);
         workSchedule = new HashMap<>();
@@ -83,10 +84,8 @@ public class WorkManager extends AbstractActor {
         setTerms(pages);
         readyBooksLSI = Arrays.stream(pages).collect(Collectors.toList());
         inProgressBooksLSI = new ArrayList<>();
-        doneBooksLSI = new ArrayList<>();
         readyBooksLDA = Arrays.stream(pages).collect(Collectors.toList());
         inProgressBooksLDA = new ArrayList<>();
-        doneBooksLDA = new ArrayList<>();
     }
 
     private void setTerms(String[] pages) {
@@ -121,11 +120,11 @@ public class WorkManager extends AbstractActor {
         Random rand = new Random();
         String book = readyBooksLDA.get(rand.nextInt(readyBooksLDA.size()));
         if (book != null) {
-//            WorkOrderMsg msg = new WorkOrderMsg(book, new LDA());
-//            actor.tell(msg, getSelf());
-//            workSchedule.put(actor.path().name(), msg);
-//            inProgressBooksLDA.add(book);
-//            readyBooksLDA.remove(book);
+            WorkOrderMsg msg = new WorkOrderMsg(book, WorkOrderMsg.WorkType.LDA);
+            actor.tell(msg, getSelf());
+            workSchedule.put(actor.path().name(), msg);
+            inProgressBooksLDA.add(book);
+            readyBooksLDA.remove(book);
         }
     }
 
@@ -136,17 +135,18 @@ public class WorkManager extends AbstractActor {
         } else if (!readyBooksLDA.isEmpty()) {
             sendLDA(getSender());
         }
-        if (inProgressBooksLSI.isEmpty() && readyBooksLSI.isEmpty()) {
+        if (inProgressBooksLSI.isEmpty() && readyBooksLSI.isEmpty()&& !isLSIdone) {
+            isLSIdone = true;
             doLsi();
-
-        } else if (readyBooksLDA.isEmpty() && inProgressBooksLDA.isEmpty()) {
-
+        } else if (readyBooksLDA.isEmpty() && inProgressBooksLDA.isEmpty() && !isLDAdone) {
+            isLDAdone = true;
+            log.info("LDA STAFF");
         }
-//        else if() {
-//            log.notifyInfo("Work has been done");
-//            getContext().getChildren().forEach(this::sayGoodBay);
-//            context().system().terminate();
-//        }
+        if (isLSIdone && isLDAdone) {
+            getContext().getChildren().forEach(this::sayGoodBay);
+            log.notifyInfo("Work has been done");
+            context().system().terminate();
+        }
     }
 
     private void doLsi() {
@@ -158,16 +158,13 @@ public class WorkManager extends AbstractActor {
         ev.showEvaluationResults(QualityMeasureEnum.BAD);
         ev.showEvaluationResults(QualityMeasureEnum.GOOD);
         ev.showEvaluationResults(QualityMeasureEnum.GREAT);
-        log.info("work has been done");
     }
 
     private void markOutWork(WorkResultMsg msg) {
         if (msg.getWorkOrderMsg().getWorkType().equals(WorkOrderMsg.WorkType.LSI)) {
             documentVectors.add(msg.getResult());
-            doneBooksLSI.add(msg.getWorkOrderMsg().getDoc());
             inProgressBooksLSI.remove(msg.getWorkOrderMsg().getDoc());
         } else {
-            doneBooksLDA.add(msg.getWorkOrderMsg().getDoc());
             inProgressBooksLDA.remove(msg.getWorkOrderMsg().getDoc());
         }
     }

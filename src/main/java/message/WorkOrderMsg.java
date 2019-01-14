@@ -12,6 +12,10 @@ public class WorkOrderMsg {
         this.workType = workType;
         this.terms = terms;
     }
+    public WorkOrderMsg(String doc, WorkType workType){
+        this.doc = doc;
+        this.workType = workType;
+    }
 
     public String getDoc() {
         return doc;
