@@ -175,7 +175,6 @@ public class WorkManager extends AbstractActor {
     }
 
     private void showMustGoOn(Terminated terminated) {
-        System.out.println("fuck");
         String name = terminated.actor().path().name();
         backToWork(name);
     }
