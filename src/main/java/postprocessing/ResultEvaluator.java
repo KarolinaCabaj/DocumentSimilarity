@@ -68,7 +68,7 @@ public class ResultEvaluator {
         System.out.println(measureClass.toString() + " contains " + numberOfElementInClass + " elements.");
 
         double percentage = percentage(measureClass);
-        System.out.println(measureClass.toString() + " percentage: " + Math.round(percentage*100.0)/100.0 + "%");
+        System.out.println(measureClass.toString() + " percentage: " + Math.round(percentage * 100.0) / 100.0 + "%");
     }
 
     private void evaluateQuality() {
@@ -88,8 +88,20 @@ public class ResultEvaluator {
                 .count();
     }
 
-    public void showAverage() {
+    public Double showAverage() {
         Double average = differences.stream().mapToDouble(val -> val).average().orElse(0.0);
         System.out.println("Average : " + average);
+        return average;
+    }
+
+    public Double getStandardDeviation() {
+        Double variance = new Double(0.0);
+        Double mean = showAverage();
+        for (Double d : differences) {
+            variance += (d - mean) * (d - mean);
+        }
+        Double stdDev = Math.sqrt(variance / (differences.size() - 1));
+        System.out.println("stdDev: " + stdDev);
+        return stdDev;
     }
 }
