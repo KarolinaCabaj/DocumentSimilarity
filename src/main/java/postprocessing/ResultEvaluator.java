@@ -1,5 +1,6 @@
 package postprocessing;
 
+import algorithms.LDA;
 import data_preprocessing.TestingWordsConverter;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
@@ -13,15 +14,18 @@ public class ResultEvaluator {
     private ArrayList<Double> differences;
     private List<String> terms;
     private RealMatrix wordsMatrix;
+    private LDA lda;
 
 
-    public ResultEvaluator(List<String> terms, RealMatrix wordsMatrix) {
+	//LDA może być null, jeśli jest ustawione, to odległość będzie liczona z tego
+    public ResultEvaluator(List<String> terms, RealMatrix wordsMatrix, LDA lda) {
+		this.lda = lda;
 		// terms → lista losowych słów, posortowanych alfabetycznie
 		for(String term : terms) {
 // 			System.out.printf("Term: %s\n", term);
 		}
-		for(int y = 0; y < wordsMatrix.getColumnDimension(); y++) {
-			for(int x = 0; x < wordsMatrix.getRowDimension(); x++) {
+		for(int x = 0; x < wordsMatrix.getRowDimension(); x++) {
+			for(int y = 0; y < wordsMatrix.getColumnDimension(); y++) {
 // 				System.out.printf("(%d,%d): %f\n", x, y, wordsMatrix.getEntry(x, y));
 			}
 		}
@@ -39,13 +43,26 @@ public class ResultEvaluator {
     private ArrayList<Double> getDifferences(List<String[]> testingData) {
         differences = new ArrayList<>();
         for (String[] data : testingData) {
-            double similarity = getCosineSimilarity(data[0], data[1]);
+			double similarity;
+			if(lda == null)
+			{
+				similarity = getCosineSimilarity(data[0], data[1]);
+            }
+            else
+            {
+				similarity = getLdaSimilarity(data[0], data[1]);
+            }
             if (similarity != -1) {
                 Double difference = computeDifference(similarity, data[2]);
                 differences.add(difference);
             }
         }
         return differences;
+    }
+    
+    private Double getLdaSimilarity(String word1, String word2)
+    {
+		return lda.calculateSimilarity(terms.indexOf(word1), terms.indexOf(word2));
     }
 
     private Double computeDifference(double computedValue, String testingValue) {

@@ -161,8 +161,8 @@ public class WorkManager extends AbstractActor {
     }
     
     private void doLda() {
-		LDA lda = new LDA(ldaDocumentVectors, 25, 1000);
-		lda.printWordTopicsTable(terms);
+		LDA lda = new LDA(ldaDocumentVectors, 30, 1000);
+// 		lda.printWordTopicsTable(terms);
 		List<int[]> bestWords = lda.getBestWordsInTopic();
 		//wydrukuj
 		System.out.printf("Najlepsze słowa: \n");
@@ -175,13 +175,21 @@ public class WorkManager extends AbstractActor {
 			System.out.printf("\n");
 		}
 		
+		RealMatrix wordsMatrix = lda.getRealMatrix();
+        ResultEvaluator ev = new ResultEvaluator(terms, wordsMatrix, lda);
+        ev.showAverage();
+        ev.showEvaluationResults(QualityMeasureEnum.BAD);
+        ev.showEvaluationResults(QualityMeasureEnum.GOOD);
+        ev.showEvaluationResults(QualityMeasureEnum.GREAT);
+        ev.getStandardDeviation();
+		
     }
 
     private void doLsi() {
         RealMatrix countMatrix = vectorizer.getCountMatrix(documentVectors);
         LSI lsi = new LSI(countMatrix, 20);
         RealMatrix wordsMatrix = lsi.getWordsMatrix();
-        ResultEvaluator ev = new ResultEvaluator(terms, wordsMatrix);
+        ResultEvaluator ev = new ResultEvaluator(terms, wordsMatrix, null);
         ev.showAverage();
         ev.showEvaluationResults(QualityMeasureEnum.BAD);
         ev.showEvaluationResults(QualityMeasureEnum.GOOD);
