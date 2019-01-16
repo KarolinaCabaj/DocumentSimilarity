@@ -4,6 +4,7 @@ import data_preprocessing.TestingWordsConverter;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +16,18 @@ public class ResultEvaluator {
 
 
     public ResultEvaluator(List<String> terms, RealMatrix wordsMatrix) {
+		// terms → lista losowych słów, posortowanych alfabetycznie
+		for(String term : terms) {
+// 			System.out.printf("Term: %s\n", term);
+		}
+		for(int y = 0; y < wordsMatrix.getColumnDimension(); y++) {
+			for(int x = 0; x < wordsMatrix.getRowDimension(); x++) {
+// 				System.out.printf("(%d,%d): %f\n", x, y, wordsMatrix.getEntry(x, y));
+			}
+		}
+		System.out.printf("Termów: %d Wielkość wiersza %d Ilość wierszy %d\n", terms.size(), wordsMatrix.getRowDimension(), wordsMatrix.getColumnDimension());
+    
+    
         this.terms = terms;
         this.wordsMatrix = wordsMatrix;
         TestingWordsConverter testingWordsConverter = new TestingWordsConverter();

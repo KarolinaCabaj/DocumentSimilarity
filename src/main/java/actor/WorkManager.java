@@ -4,6 +4,7 @@ import akka.actor.*;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import algorithms.LSI;
+import algorithms.LDA;
 import data_preprocessing.TextPreprocessor;
 import data_preprocessing.Vectorizer;
 import downloader.UrlLoader;
@@ -32,6 +33,7 @@ public class WorkManager extends AbstractActor {
     private List<String> terms;
     private Vectorizer vectorizer;
     private List<RealVector> documentVectors;
+    private List<int[]> ldaDocumentVectors;
     private Boolean isLSIdone = false;
     private Boolean isLDAdone = false;
 
@@ -62,6 +64,7 @@ public class WorkManager extends AbstractActor {
     private void startWork(StartWorkMsg msg) {
         log.info("Starting work...");
         documentVectors = new ArrayList<>();
+        ldaDocumentVectors = new ArrayList<>();
         filePath = msg.getPath();
         initBookList();
         watchAnalysts();
@@ -88,17 +91,25 @@ public class WorkManager extends AbstractActor {
         inProgressBooksLDA = new ArrayList<>();
     }
 
+    /** Ustaw zbiór niepowtarzalnych słów z dokumentów **/
     private void setTerms(String[] pages) {
         TextPreprocessor textPreprocessor = new TextPreprocessor();
         List<String[]> listOfDocumentsTerms = createLisOfDocumentTerms(pages, textPreprocessor);
+        //NOTE listOfDocumentsTerms to lista tablic słów z dokumentów oraz słowa O
         vectorizer = new Vectorizer(listOfDocumentsTerms);
         terms = vectorizer.getTerms();
+        //NOTE terms to zbiór słów, bez powtórzeń, złączony ze wszystkich dokumentów
     }
 
+    /** Oblicz listę tablic, gdzie tablica zawiera słowa z dokumentu */
     private List<String[]> createLisOfDocumentTerms(String[] pages, TextPreprocessor textPreprocessor) {
         List<String[]> listOfDocumentsTerms = new ArrayList<>();
         for (String document : pages) {
             String[] tokens = textPreprocessor.getPreparedTokens(document);
+            //NOTE tokens to tablica stringów z dokumentów oraz liter O
+            for(String token : tokens) {
+// 				System.out.printf("Termowanie: %s\n", token);
+            }
             listOfDocumentsTerms.add(tokens);
         }
         return listOfDocumentsTerms;
@@ -120,7 +131,7 @@ public class WorkManager extends AbstractActor {
         Random rand = new Random();
         String book = readyBooksLDA.get(rand.nextInt(readyBooksLDA.size()));
         if (book != null) {
-            WorkOrderMsg msg = new WorkOrderMsg(book, WorkOrderMsg.WorkType.LDA);
+            WorkOrderMsg msg = new WorkOrderMsg(book, WorkOrderMsg.WorkType.LDA, terms);
             actor.tell(msg, getSelf());
             workSchedule.put(actor.path().name(), msg);
             inProgressBooksLDA.add(book);
@@ -140,13 +151,17 @@ public class WorkManager extends AbstractActor {
             doLsi();
         } else if (readyBooksLDA.isEmpty() && inProgressBooksLDA.isEmpty() && !isLDAdone) {
             isLDAdone = true;
-            log.info("LDA STAFF");
+            doLda();
         }
         if (isLSIdone && isLDAdone) {
             getContext().getChildren().forEach(this::sayGoodBay);
             log.notifyInfo("Work has been done");
             context().system().terminate();
         }
+    }
+    
+    private void doLda() {
+		LDA lda = new LDA(ldaDocumentVectors);
     }
 
     private void doLsi() {
@@ -161,10 +176,18 @@ public class WorkManager extends AbstractActor {
     }
 
     private void markOutWork(WorkResultMsg msg) {
+		//do listy, której rekordy to histogramy słów w jednym dokumencie, dodaj nowy histogram obliczony przez aktora
         if (msg.getWorkOrderMsg().getWorkType().equals(WorkOrderMsg.WorkType.LSI)) {
             documentVectors.add(msg.getResult());
             inProgressBooksLSI.remove(msg.getWorkOrderMsg().getDoc());
         } else {
+			//przepisz tablicę double na tablicę int i dodaj to zbioru histogramów
+			int[] resultArray = new int[msg.getResult().getDimension()];
+			for(int i = 0; i < msg.getResult().getDimension(); i++) {
+				double histogramValue = msg.getResult().getEntry(i);
+				resultArray[i] = (int)histogramValue;
+			}
+			ldaDocumentVectors.add(resultArray);
             inProgressBooksLDA.remove(msg.getWorkOrderMsg().getDoc());
         }
     }

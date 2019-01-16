@@ -15,6 +15,11 @@ public class LSI {
     private RealMatrix wordsMatrix;
 
     public LSI(RealMatrix matrix, int valueK) {
+		for(int y = 0; y < matrix.getColumnDimension(); y++) {
+			for(int x = 0; x < matrix.getRowDimension(); x++) {
+// 				System.out.printf("(%d,%d): %f\n", x, y, matrix.getEntry(x, y));
+			}
+		}
         this.valueK = valueK;
         this.matrix = matrix;
         this.svd = new SingularValueDecomposition(this.matrix);
