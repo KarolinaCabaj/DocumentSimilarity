@@ -161,7 +161,7 @@ public class WorkManager extends AbstractActor {
     }
     
     private void doLda() {
-		LDA lda = new LDA(ldaDocumentVectors);
+		LDA lda = new LDA(ldaDocumentVectors, 5, 10);
     }
 
     private void doLsi() {
@@ -186,6 +186,10 @@ public class WorkManager extends AbstractActor {
 			for(int i = 0; i < msg.getResult().getDimension(); i++) {
 				double histogramValue = msg.getResult().getEntry(i);
 				resultArray[i] = (int)histogramValue;
+				if(resultArray[i] != 0)
+				{
+// 					System.out.printf("Dodawanie: %d(%s) → %d\n", i, terms.get(i), resultArray[i]);
+				}
 			}
 			ldaDocumentVectors.add(resultArray);
             inProgressBooksLDA.remove(msg.getWorkOrderMsg().getDoc());
