@@ -161,7 +161,20 @@ public class WorkManager extends AbstractActor {
     }
     
     private void doLda() {
-		LDA lda = new LDA(ldaDocumentVectors, 5, 10);
+		LDA lda = new LDA(ldaDocumentVectors, 25, 1000);
+		lda.printWordTopicsTable(terms);
+		List<int[]> bestWords = lda.getBestWordsInTopic();
+		//wydrukuj
+		System.out.printf("Najlepsze słowa: \n");
+		for(int[] words : bestWords)
+		{
+			for(int i = 0; i < 10; i++)
+			{
+				System.out.printf("%s ", terms.get(words[i]));
+			}
+			System.out.printf("\n");
+		}
+		
     }
 
     private void doLsi() {
