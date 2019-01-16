@@ -179,13 +179,14 @@ public class WorkManager extends AbstractActor {
 
     private void doLsi() {
         RealMatrix countMatrix = vectorizer.getCountMatrix(documentVectors);
-        LSI lsi = new LSI(countMatrix, 15);
+        LSI lsi = new LSI(countMatrix, 20);
         RealMatrix wordsMatrix = lsi.getWordsMatrix();
         ResultEvaluator ev = new ResultEvaluator(terms, wordsMatrix);
         ev.showAverage();
         ev.showEvaluationResults(QualityMeasureEnum.BAD);
         ev.showEvaluationResults(QualityMeasureEnum.GOOD);
         ev.showEvaluationResults(QualityMeasureEnum.GREAT);
+        ev.getStandardDeviation();
     }
 
     private void markOutWork(WorkResultMsg msg) {
