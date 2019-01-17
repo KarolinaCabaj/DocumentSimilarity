@@ -1,0 +1,9 @@
+Do uruchomienia potrzebny jest Maven i Java. Program mvn.
+
+Kompilacja:
+mvn compile
+
+Uruchomienie:
+mvn exec:exec
+
+Program generuje wyniki na wyjściu.

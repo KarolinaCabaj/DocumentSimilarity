@@ -1,0 +1,120 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------< wordSimilarity:DocumentSimilarity >------------------
+[INFO] Building DocumentSimilarity 1.0-SNAPSHOT
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- exec-maven-plugin:1.6.0:exec (default-cli) @ DocumentSimilarity ---
+[INFO] [01/16/2019 12:48:26.549] [DocumentSimilarity-akka.actor.default-dispatcher-3] [akka://DocumentSimilarity/user/Manager/worker1] Waiting for work
+[INFO] [01/16/2019 12:48:26.549] [DocumentSimilarity-akka.actor.default-dispatcher-5] [akka://DocumentSimilarity/user/Manager/worker2] Waiting for work
+[INFO] [01/16/2019 12:48:26.550] [DocumentSimilarity-akka.actor.default-dispatcher-6] [akka://DocumentSimilarity/user/Manager/worker3] Waiting for work
+[INFO] [01/16/2019 12:48:26.549] [DocumentSimilarity-akka.actor.default-dispatcher-2] [akka://DocumentSimilarity/user/Manager/worker0] Waiting for work
+[INFO] [01/16/2019 12:48:26.550] [DocumentSimilarity-akka.actor.default-dispatcher-7] [akka://DocumentSimilarity/user/Manager/worker4] Waiting for work
+[INFO] [01/16/2019 12:48:26.551] [DocumentSimilarity-akka.actor.default-dispatcher-9] [akka://DocumentSimilarity/user/Manager/worker5] Waiting for work
+[INFO] [01/16/2019 12:48:26.551] [DocumentSimilarity-akka.actor.default-dispatcher-10] [akka://DocumentSimilarity/user/Manager/worker6] Waiting for work
+[INFO] [01/16/2019 12:48:26.552] [DocumentSimilarity-akka.actor.default-dispatcher-11] [akka://DocumentSimilarity/user/Manager/worker7] Waiting for work
+[INFO] [01/16/2019 12:48:26.552] [DocumentSimilarity-akka.actor.default-dispatcher-12] [akka://DocumentSimilarity/user/Manager/worker8] Waiting for work
+[INFO] [01/16/2019 12:48:26.554] [DocumentSimilarity-akka.actor.default-dispatcher-4] [akka://DocumentSimilarity/user/Manager] Waiting for order
+[INFO] [01/16/2019 12:48:26.554] [DocumentSimilarity-akka.actor.default-dispatcher-13] [akka://DocumentSimilarity/user/Manager/worker9] Waiting for work
+[INFO] [01/16/2019 12:48:26.556] [DocumentSimilarity-akka.actor.default-dispatcher-4] [akka://DocumentSimilarity/user/Manager] Starting work...
+[INFO] [01/16/2019 12:49:17.011] [DocumentSimilarity-akka.actor.default-dispatcher-12] [akka://DocumentSimilarity/user/Manager/worker0] working for LSI
+[INFO] [01/16/2019 12:49:17.011] [DocumentSimilarity-akka.actor.default-dispatcher-8] [akka://DocumentSimilarity/user/Manager/worker1] working for LDA
+[INFO] [01/16/2019 12:49:17.011] [DocumentSimilarity-akka.actor.default-dispatcher-6] [akka://DocumentSimilarity/user/Manager/worker2] working for LSI
+[INFO] [01/16/2019 12:49:17.011] [DocumentSimilarity-akka.actor.default-dispatcher-10] [akka://DocumentSimilarity/user/Manager/worker3] working for LDA
+[INFO] [01/16/2019 12:49:17.020] [DocumentSimilarity-akka.actor.default-dispatcher-5] [akka://DocumentSimilarity/user/Manager/worker4] working for LSI
+[INFO] [01/16/2019 12:49:17.020] [DocumentSimilarity-akka.actor.default-dispatcher-11] [akka://DocumentSimilarity/user/Manager/worker5] working for LDA
+[INFO] [01/16/2019 12:49:17.020] [DocumentSimilarity-akka.actor.default-dispatcher-7] [akka://DocumentSimilarity/user/Manager/worker6] working for LSI
+[INFO] [01/16/2019 12:49:17.020] [DocumentSimilarity-akka.actor.default-dispatcher-3] [akka://DocumentSimilarity/user/Manager/worker7] working for LDA
+[INFO] [01/16/2019 12:49:17.022] [DocumentSimilarity-akka.actor.default-dispatcher-9] [akka://DocumentSimilarity/user/Manager/worker9] working for LDA
+[INFO] [01/16/2019 12:49:17.049] [DocumentSimilarity-akka.actor.default-dispatcher-13] [akka://DocumentSimilarity/user/Manager/worker8] working for LSI
+[INFO] [01/16/2019 12:49:20.483] [DocumentSimilarity-akka.actor.default-dispatcher-15] [akka://DocumentSimilarity/user/Manager/worker8] working for LSI
+[INFO] [01/16/2019 12:49:21.322] [DocumentSimilarity-akka.actor.default-dispatcher-13] [akka://DocumentSimilarity/user/Manager/worker4] working for LSI
+[INFO] [01/16/2019 12:49:26.556] [DocumentSimilarity-akka.actor.default-dispatcher-15] [akka://DocumentSimilarity/user/Manager/worker8] working for LSI
+[INFO] [01/16/2019 12:49:31.106] [DocumentSimilarity-akka.actor.default-dispatcher-8] [akka://DocumentSimilarity/user/Manager/worker1] working for LSI
+[INFO] [01/16/2019 12:49:31.181] [DocumentSimilarity-akka.actor.default-dispatcher-7] [akka://DocumentSimilarity/user/Manager/worker6] working for LSI
+[INFO] [01/16/2019 12:49:32.274] [DocumentSimilarity-akka.actor.default-dispatcher-12] [akka://DocumentSimilarity/user/Manager/worker0] working for LSI
+[INFO] [01/16/2019 12:49:32.419] [DocumentSimilarity-akka.actor.default-dispatcher-3] [akka://DocumentSimilarity/user/Manager/worker7] working for LSI
+[INFO] [01/16/2019 12:49:35.877] [DocumentSimilarity-akka.actor.default-dispatcher-5] [akka://DocumentSimilarity/user/Manager/worker6] working for LSI
+[INFO] [01/16/2019 12:49:40.175] [DocumentSimilarity-akka.actor.default-dispatcher-6] [akka://DocumentSimilarity/user/Manager/worker2] working for LSI
+[INFO] [01/16/2019 12:49:40.400] [DocumentSimilarity-akka.actor.default-dispatcher-7] [akka://DocumentSimilarity/user/Manager/worker3] working for LSI
+[INFO] [01/16/2019 12:49:41.045] [DocumentSimilarity-akka.actor.default-dispatcher-11] [akka://DocumentSimilarity/user/Manager/worker5] working for LSI
+[INFO] [01/16/2019 12:49:44.442] [DocumentSimilarity-akka.actor.default-dispatcher-15] [akka://DocumentSimilarity/user/Manager/worker8] working for LSI
+[INFO] [01/16/2019 12:49:47.951] [DocumentSimilarity-akka.actor.default-dispatcher-10] [akka://DocumentSimilarity/user/Manager/worker8] working for LSI
+[INFO] [01/16/2019 12:49:49.905] [DocumentSimilarity-akka.actor.default-dispatcher-15] [akka://DocumentSimilarity/user/Manager/worker7] working for LSI
+[INFO] [01/16/2019 12:49:50.692] [DocumentSimilarity-akka.actor.default-dispatcher-13] [akka://DocumentSimilarity/user/Manager/worker4] working for LSI
+[INFO] [01/16/2019 12:49:50.799] [DocumentSimilarity-akka.actor.default-dispatcher-11] [akka://DocumentSimilarity/user/Manager/worker5] working for LDA
+[INFO] [01/16/2019 12:49:55.568] [DocumentSimilarity-akka.actor.default-dispatcher-9] [akka://DocumentSimilarity/user/Manager/worker9] working for LDA
+[INFO] [01/16/2019 12:49:59.187] [DocumentSimilarity-akka.actor.default-dispatcher-12] [akka://DocumentSimilarity/user/Manager/worker0] working for LDA
+[INFO] [01/16/2019 12:50:00.106] [DocumentSimilarity-akka.actor.default-dispatcher-5] [akka://DocumentSimilarity/user/Manager/worker6] working for LDA
+[INFO] [01/16/2019 12:50:02.168] [DocumentSimilarity-akka.actor.default-dispatcher-8] [akka://DocumentSimilarity/user/Manager/worker1] working for LDA
+[INFO] [01/16/2019 12:50:03.248] [DocumentSimilarity-akka.actor.default-dispatcher-6] [akka://DocumentSimilarity/user/Manager/worker2] working for LDA
+[INFO] [01/16/2019 12:50:05.136] [DocumentSimilarity-akka.actor.default-dispatcher-12] [akka://DocumentSimilarity/user/Manager/worker0] working for LDA
+[INFO] [01/16/2019 12:50:06.122] [DocumentSimilarity-akka.actor.default-dispatcher-10] [akka://DocumentSimilarity/user/Manager/worker8] working for LDA
+[INFO] [01/16/2019 12:50:09.251] [DocumentSimilarity-akka.actor.default-dispatcher-5] [akka://DocumentSimilarity/user/Manager/worker6] working for LDA
+[INFO] [01/16/2019 12:50:15.417] [DocumentSimilarity-akka.actor.default-dispatcher-3] [akka://DocumentSimilarity/user/Manager/worker4] working for LDA
+[INFO] [01/16/2019 12:50:18.521] [DocumentSimilarity-akka.actor.default-dispatcher-15] [akka://DocumentSimilarity/user/Manager/worker7] working for LDA
+[INFO] [01/16/2019 12:50:20.403] [DocumentSimilarity-akka.actor.default-dispatcher-7] [akka://DocumentSimilarity/user/Manager/worker3] working for LDA
+Termów: 10590 Wielkość wiersza 10590 Ilość wierszy 20
+Average : 3.0484345603067022
+BAD contains 1711 elements.
+BAD percentage: 44.69%
+GOOD contains 1326 elements.
+GOOD percentage: 34.63%
+GREAT contains 792 elements.
+GREAT percentage: 20.68%
+Average : 3.0484345603067022
+stdDev: 2.1632080644842944
+[INFO] [01/16/2019 12:50:26.942] [DocumentSimilarity-akka.actor.default-dispatcher-6] [akka://DocumentSimilarity/user/Manager/worker5] working for LDA
+[INFO] [01/16/2019 12:50:26.942] [DocumentSimilarity-akka.actor.default-dispatcher-10] [akka://DocumentSimilarity/user/Manager/worker9] working for LDA
+[INFO] [01/16/2019 12:50:26.946] [DocumentSimilarity-akka.actor.default-dispatcher-13] [akka://DocumentSimilarity/user/Manager/worker0] working for LDA
+Algorytm LDA
+Dokumentów: 20
+Ilość danych histogramu: 10590
+Najlepsze słowa: 
+lead begin nation large period west second central woman island 
+soviet german force ally eastern military army involve war publishing 
+may news first international relation say saint move visit bring 
+jazz emotion blue edit musician band play emotional music free 
+since person right leave speak open issue free rise native 
+see include historical give find son little mean cross name 
+retrieve archive original time house white presidential may health act 
+article early century become among base even land date agree 
+state unite city national district federal include large civil public 
+music vocal album singe musical singer register include roll like 
+may main well high medium billion poll individual general primary 
+several day result major attempt help troop late financial global 
+political economic russia minister leader foreign fascist sign national second 
+later group young month big precede strike lady attack across 
+year good one first award go record million lyric become 
+year live verb machine however common past water annual subject 
+term prime associate long like presidency problem due member grow 
+within one group around experience relate edit traditional other field 
+also use main popular consider refer oxford show read external 
+western end kingdom china publish start age take socialist hold 
+paul pope catholic roman great peter middle visit holy council 
+three take bear personal independent claim four build council ask 
+human social often modern different develop believe archive need genetic 
+old statement report list along throughout hurricane rule datum timeline 
+also congress know area elect provide school intelligence found official 
+trump retrieve campaign time news make secretary return deal real 
+person one article accord come love call source view christian 
+two make book page link write last identifier work great 
+new city call remain serve travel southern place despite joseph 
+change create form perform follow without turn never must produce 
+Termów: 10590 Wielkość wiersza 10590 Ilość wierszy 30
+Average : 4.459740391450117
+BAD contains 3423 elements.
+BAD percentage: 66.53%
+GOOD contains 1078 elements.
+GOOD percentage: 20.95%
+GREAT contains 644 elements.
+GREAT percentage: 12.52%
+Average : 4.459740391450117
+stdDev: 2.6337337999137596
+[INFO] [01/16/2019 12:51:18.424] [DocumentSimilarity-akka.actor.default-dispatcher-15] [akka://DocumentSimilarity/user/Manager] Work has been done
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  02:53 min
+[INFO] Finished at: 2019-01-16T12:51:18+01:00
+[INFO] ------------------------------------------------------------------------
