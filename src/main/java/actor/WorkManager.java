@@ -179,12 +179,17 @@ public class WorkManager extends AbstractActor {
     }
 
     private void backToWork(String name) {
-        analystActors = analystActors.stream()
-                .filter(actor -> !actor.path().name().equals(name))
-                .collect(Collectors.toList());
-        ActorRef actor = getContext().actorOf(LSIAnalyst.props(), name);
-        context().watch(actor);
-        analystActors.add(actor);
-        actor.tell(workSchedule.get(name), getSelf());
+        ActorRef actorRef;
+        if (!name.equals("lda-manager")) {
+            analystActors = analystActors.stream()
+                    .filter(actor -> !actor.path().name().equals(name))
+                    .collect(Collectors.toList());
+            actorRef = getContext().actorOf(LSIAnalyst.props(), name);
+        } else {
+            actorRef = getContext().actorOf(LDAManager.props(), "ActorRef actor");
+        }
+        context().watch(actorRef);
+        analystActors.add(actorRef);
+        actorRef.tell(workSchedule.get(name), getSelf());
     }
 }
