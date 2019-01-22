@@ -5,6 +5,7 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import algorithms.LSI;
 import algorithms.LDA;
+import algorithms.LDAManager;
 import data_preprocessing.TextPreprocessor;
 import data_preprocessing.Vectorizer;
 import downloader.UrlLoader;
@@ -36,8 +37,10 @@ public class WorkManager extends AbstractActor {
     private List<int[]> ldaDocumentVectors;
     private Boolean isLSIdone = false;
     private Boolean isLDAdone = false;
+    private Integer numberOfTopics;
 
-    private WorkManager(Integer amountOfWorkers) {
+    private WorkManager(Integer amountOfWorkers, Integer numberOfTopics) {
+		this.numberOfTopics = numberOfTopics;
         log = Logging.getLogger(getContext().getSystem(), this);
         workSchedule = new HashMap<>();
         analystActors = IntStream
@@ -47,8 +50,8 @@ public class WorkManager extends AbstractActor {
         log.info("Waiting for order");
     }
 
-    static public Props props(Integer amountOfWorkers) {
-        return Props.create(WorkManager.class, () -> new WorkManager(amountOfWorkers));
+    static public Props props(Integer amountOfWorkers, Integer numberOfTopics) {
+        return Props.create(WorkManager.class, () -> new WorkManager(amountOfWorkers, numberOfTopics));
     }
 
     @Override
@@ -161,27 +164,31 @@ public class WorkManager extends AbstractActor {
     }
     
     private void doLda() {
-		LDA lda = new LDA(ldaDocumentVectors, 50, 100);
-// 		lda.printWordTopicsTable(terms);
-		List<int[]> bestWords = lda.getBestWordsInTopic();
-		//wydrukuj
-		System.out.printf("Najlepsze słowa: \n");
-		for(int[] words : bestWords)
-		{
-			for(int i = 0; i < 10; i++)
-			{
-				System.out.printf("%s ", terms.get(words[i]));
-			}
-			System.out.printf("\n");
-		}
+		//ldaDocumentVectors → histogramy do pracy LDA
 		
-		RealMatrix wordsMatrix = lda.getRealMatrix();
-        ResultEvaluator ev = new ResultEvaluator(terms, wordsMatrix, lda);
-        ev.showAverage();
-        ev.showEvaluationResults(QualityMeasureEnum.BAD);
-        ev.showEvaluationResults(QualityMeasureEnum.GOOD);
-        ev.showEvaluationResults(QualityMeasureEnum.GREAT);
-        ev.getStandardDeviation();
+		//stwórz manager LDA
+		ActorRef ldaManager = getContext().actorOf(LDAManager.props(), "lda-manager");
+		//wyślij polecenie startu
+		ldaManager.tell(new WorkOrderMsg(null, WorkOrderMsg.WorkType.LDA, terms, numberOfTopics, 500) , getSelf());
+		
+    
+// 		System.out.printf("Najlepsze słowa: \n");
+// 		for(int[] words : bestWords)
+// 		{
+// 			for(int i = 0; i < 10; i++)
+// 			{
+// 				System.out.printf("%s ", terms.get(words[i]));
+// 			}
+// 			System.out.printf("\n");
+// 		}
+		
+// 		RealMatrix wordsMatrix = lda.getRealMatrix();
+//         ResultEvaluator ev = new ResultEvaluator(terms, wordsMatrix, lda);
+//         ev.showAverage();
+//         ev.showEvaluationResults(QualityMeasureEnum.BAD);
+//         ev.showEvaluationResults(QualityMeasureEnum.GOOD);
+//         ev.showEvaluationResults(QualityMeasureEnum.GREAT);
+//         ev.getStandardDeviation();
 		
     }
 

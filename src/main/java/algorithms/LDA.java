@@ -128,6 +128,7 @@ public class LDA {
 		this.documents = new ArrayList<>();
 		for(int documentIndex = 0; documentIndex < documentsHistograms.size(); documentIndex++) 
 		{
+			Random random = new Random(documentIndex);
 			//dla każdego słowa w dokumencie
 			int[] histogram = documentsHistograms.get(documentIndex);
 			List<WordPair> document = new ArrayList<>();
@@ -139,7 +140,6 @@ public class LDA {
 				//dodaj słowa do dokumentu w liczbie z histogramu, zaczynając z losowym tematem
 				for(int i = 0; i < histogramValue; i++) 
 				{
-					Random random = new Random();
 					int topicId = random.nextInt(topicsPerDocument);
 					document.add(new WordPair(wordId, topicId));
 					markWordWithTopic(documentIndex, wordIndex, topicId);
