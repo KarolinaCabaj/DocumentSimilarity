@@ -29,22 +29,29 @@ public class Analyst extends AbstractActor {
     private WorkResultMsg analyzeText(WorkOrderMsg workOrderMsg) {
         if (workOrderMsg.getWorkType().equals(WorkOrderMsg.WorkType.LSI)) {
             log.info("working for LSI");
+            //zwraca histogram słów w dokumencie
             return new WorkResultMsg(getVector(workOrderMsg), workOrderMsg);
         } else {
             log.info("working for LDA");
-            return new WorkResultMsg(new ArrayRealVector(), workOrderMsg);
+            //zwraca histogram słów w dokumencie
+            return new WorkResultMsg(getVector(workOrderMsg), workOrderMsg);
         }
     }
 
     private RealVector getVector(WorkOrderMsg workOrderMsg) {
         TextPreprocessor textPreprocessor = new TextPreprocessor();
+        //WARNING zamiast RealVector powinien być tutaj raczej IntVector (gdyby istniał)
         RealVector vector = createOccurrenceVector(
                 textPreprocessor.getPreparedTokens(workOrderMsg.getDoc()),
                 workOrderMsg.getTerms());
+		//NOTE pierwszy argument to tablica powtarzalnych słów
+		//NOTE drugi argument to zbiór niepowtarzalnych słów
+		
         return vector;
     }
 
-
+	/** Oblicza ilość występujących słów ze zbioru @arg terms, licząc słowa w tablicy @arg tokens 
+		Zwraca wektor liczb, gdzie każda liczba jest ilością wystąpionych słów */
     private RealVector createOccurrenceVector(String[] tokens, List<String> terms) {
         RealVector vec = new ArrayRealVector(terms.size());
         TermDictionary termDictionary = new TermDictionary(tokens);

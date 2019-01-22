@@ -72,7 +72,7 @@ public class LSIController {
         RealMatrix countMatrix = vectorizer.getCountMatrix(documentVectors);
         LSI lsi = new LSI(countMatrix, 20);
         RealMatrix wordsMatrix = lsi.getWordsMatrix();
-        ResultEvaluator ev = new ResultEvaluator(terms, wordsMatrix);
+        ResultEvaluator ev = new ResultEvaluator(terms, wordsMatrix, null);
         ev.showAverage();
         ev.showEvaluationResults(QualityMeasureEnum.BAD);
         ev.showEvaluationResults(QualityMeasureEnum.GOOD);

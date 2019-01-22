@@ -1,5 +1,6 @@
 package postprocessing;
 
+import algorithms.LDAResponse;
 import data_preprocessing.TestingWordsConverter;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
@@ -12,9 +13,10 @@ public class ResultEvaluator {
     private ArrayList<Double> differences;
     private List<String> terms;
     private RealMatrix wordsMatrix;
+    private LDAResponse lda;
 
-
-    public ResultEvaluator(List<String> terms, RealMatrix wordsMatrix) {
+    public ResultEvaluator(List<String> terms, RealMatrix wordsMatrix, LDAResponse lda) {
+	this.lda = lda;
         this.terms = terms;
         this.wordsMatrix = wordsMatrix;
         TestingWordsConverter testingWordsConverter = new TestingWordsConverter();
@@ -26,13 +28,26 @@ public class ResultEvaluator {
     private ArrayList<Double> getDifferences(List<String[]> testingData) {
         differences = new ArrayList<>();
         for (String[] data : testingData) {
-            double similarity = getCosineSimilarity(data[0], data[1]);
+		double similarity;
+		if(lda == null)
+		{
+				similarity = getCosineSimilarity(data[0], data[1]);
+            }
+            else
+            {
+				similarity = getLdaSimilarity(data[0], data[1]);
+            }
             if (similarity != -1) {
                 Double difference = computeDifference(similarity, data[2]);
                 differences.add(difference);
             }
         }
         return differences;
+    }
+    
+    private Double getLdaSimilarity(String word1, String word2)
+    {
+		return lda.calculateSimilarity(terms.indexOf(word1), terms.indexOf(word2));
     }
 
     private Double computeDifference(double computedValue, String testingValue) {
