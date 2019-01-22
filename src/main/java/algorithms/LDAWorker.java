@@ -22,7 +22,7 @@ public class LDAWorker extends AbstractActor
 		}
 		public void run()
 		{
-			while(true)
+			while(alive)
 			{
 				thisWorker.stepOnce();
 			}
@@ -68,7 +68,7 @@ public class LDAWorker extends AbstractActor
 	/** Ropocznij pracę **/
 	private void startWork(int numberOfTopics, List<int[]> textOfIdsTopics, List<double[]> baseWordTopicsTable, double[] topicsSums)
 	{
-		log.info("Rozpoczęcie pracy na " + numberOfTopics + " tematów");
+		log.info("Rozpoczęcie pracy na " + numberOfTopics + " tematów z tekstem długości " + textOfIdsTopics.size());
 		this.document = textOfIdsTopics;
 		this.topicsSums = topicsSums;
 		this.documentTopicVector = new int[numberOfTopics];
@@ -97,10 +97,10 @@ public class LDAWorker extends AbstractActor
 	private void synchronize(SyncMsg values, ActorRef actorToSend)
 	{
 		//upewnij się, że pętla przejdzie przynajmniej raz
-		for(int i = 0; i < 1000; i++)
-		stepOnce();
 		synchronized(mutex)
 		{
+			stepOnce();
+		
 			if(values.wordTopicsTable != null || values.topicsSums != null)
 			{
 				//pozwól na odbiór niepełnej odpowiedzi, nie integruj takiej
@@ -125,7 +125,6 @@ public class LDAWorker extends AbstractActor
 			syncMsg.wordTopicsTable = wordTopicsTable;
 			syncMsg.topicsSums = topicsSums;
 			actorToSend.tell(syncMsg, getSelf());
-			log.info("Zsynchronizował raz " + synchronizationCount);
 		}
 	}
 	
@@ -142,6 +141,10 @@ public class LDAWorker extends AbstractActor
 			.match(SyncMsg.class, sync ->
 			{
 				synchronize(sync, getSender()); 
+			})
+			.match(TerminateMsg.class, msg ->
+			{
+				alive = false;
 			})
 			.build();
 	}

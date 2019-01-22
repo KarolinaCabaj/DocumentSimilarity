@@ -6,6 +6,8 @@ import akka.event.LoggingAdapter;
 import akka.actor.Props;
 import message.WorkOrderMsg;
 import message.SyncMsg;
+import message.TerminateMsg;
+import message.FinishMsg;
 import akka.event.Logging;
 import java.util.*;
 import java.lang.*;
@@ -13,6 +15,35 @@ import java.lang.*;
 /** Zarządza i rozdaje aktorów algorytmu LDA */
 public class LDAManager extends AbstractActor
 {
+	/** Porównywalna para prawdopodobieństwa u identyfikatora słowa */
+	private class WordProbabilityPair implements Comparable<WordProbabilityPair> {
+		public double probability;
+		public int wordId;
+		
+		public WordProbabilityPair(double probability, int wordId) {
+			this.probability = probability;
+			this.wordId = wordId;
+		}
+		
+		public int compareTo(WordProbabilityPair other)
+		{
+			if(other.probability > probability)
+			{
+				return 1;
+			}
+			else if(other.probability < probability)
+			{
+				return -1;
+			}
+			else
+			{
+				//to się prawie nigdy nie zdarzy przy doublach
+				return 0;
+			}
+		}
+	
+	}
+
 	/** Logger */
 	private LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
 	
@@ -26,7 +57,7 @@ public class LDAManager extends AbstractActor
 	private double[] topicsSums;
 	
 	/** Ilości synchronizacji */
-	private Map<ActorRef, Integer> synchronizations;
+	private int[] synchronizations;
 
 	/** Ilość szukanych tematów */
 	private int numberOfTopics;
@@ -40,12 +71,14 @@ public class LDAManager extends AbstractActor
 	/** Obiekt do synchronizacji */
 	Object mutex = new Object();
 	
+	/** Aktor, do którego zwracamy wynik */
+	ActorRef parent;
+	
 	/** Konstruktor */
 	private LDAManager()
 	{
 		log.info("Manager LDA zrodził się");
 		workersList = new ArrayList<>();
-		this.synchronizations = new HashMap<>();
 	}
 	
 	/** Fabryka do konstrukcji z zewnątrz */
@@ -58,6 +91,7 @@ public class LDAManager extends AbstractActor
 	private void dispatchSubworkers(int numberOfTopics, int numberOfSyncs, List<int[]> histograms)
 	{
 		final int numberOfWorkers = histograms.size();
+		this.synchronizations = new int[numberOfWorkers];
 		this.numberOfTopics = numberOfTopics;
 		this.numberOfSyncs = numberOfSyncs;
 		log.info("Rozstawianie " + numberOfWorkers + " pracowników na " + numberOfTopics + " tematów przy " + numberOfSyncs + " synchronizajach");
@@ -76,7 +110,6 @@ public class LDAManager extends AbstractActor
 		{
 			ActorRef worker = getContext().actorOf(LDAWorker.props(), "lda-worker-" + i);
 			workersList.add(worker);
-			synchronizations.put(worker, new Integer(0));
 		}
 		//wylosuj tematy i wypełnij tabele
 		log.info("Przydzielanie wstępnych tematów");
@@ -139,9 +172,7 @@ public class LDAManager extends AbstractActor
 				{
 					topicsSums[i] = (topicsSums[i] + sync.topicsSums[i]) / 2.0;
 				}
-				//zwiększ licznik dla tego aktora
-				log.info("Synchronized " + sender + " times " + synchronizations.get(sender));
-				synchronizations.put(sender, new Integer(synchronizations.get(sender).intValue() + 1));
+
 			}
 			
 			//wstaw zaktualizowane wartości i wyślij z powrotem
@@ -154,6 +185,9 @@ public class LDAManager extends AbstractActor
 			
 			//sprawdź, czy nie trzeba już zakończyć
 			checkTermination();
+			
+			//zwiększ licznik dla tego aktora
+			synchronizations[workersList.indexOf(sender)]++;
 
 		}
 	}
@@ -161,27 +195,62 @@ public class LDAManager extends AbstractActor
 	/** Sprawdza, czy nie trzeba zamknąć programu, bo zsynchronizował się z każdym wystarczającą ilość razy */
 	private void checkTermination()
 	{
-		for(ActorRef actor : synchronizations.keySet())
+		for(ActorRef actor : workersList)
 		{
-			if(synchronizations.get(actor).intValue() < numberOfSyncs)
+			if(synchronizations[workersList.indexOf(actor)] < numberOfSyncs)
 			{
 				return;
 			}
 		}
-		
+		isFinished = true;
 		for(ActorRef actor : workersList)
 		{
-			isFinished = true;
-			
-			
-			getContext().unwatch(actor);
+			actor.tell(new TerminateMsg(), getSelf());
 			actor.tell(PoisonPill.getInstance(), ActorRef.noSender());
+			getContext().unwatch(actor);
 		}
-						
-		//TODO
-		//zwróć wynik
+
 		log.info("LDA Manager zakończył pracę");
+		FinishMsg finishMsg = new FinishMsg();
+		finishMsg.bestWords = getBestWordsInTopic();
+		parent.tell(finishMsg, getSelf());
 	}
+	
+	/** Oblicz najlepsze słowa w każdym temacie */
+    public List<int[]> getBestWordsInTopic()
+    {
+		List<int[]> response = new ArrayList<>();
+		for(int topicId = 0; topicId < numberOfTopics; topicId++)
+		{
+			response.add(new int[wordTopicsTable.size()]); 
+		}
+		
+		//wsadź prawdopodobieństwa do drzew
+		List<Set<WordProbabilityPair>> setsInTopics = new ArrayList<>();
+		for(int topicId = 0; topicId < numberOfTopics; topicId++)
+		{
+			Set<WordProbabilityPair> set = new TreeSet<>();
+			final double wordsInTopic = topicsSums[topicId];
+			for(int wordId = 0; wordId < wordTopicsTable.size(); wordId++)
+			{
+				double wordProbability = wordTopicsTable.get(wordId)[topicId] / wordsInTopic;
+				set.add(new WordProbabilityPair(wordProbability, wordId));
+			}
+			setsInTopics.add(set);
+		}
+		//odczytaj
+		for(int topicId = 0; topicId < numberOfTopics; topicId++)
+		{
+			int index = 0;
+			for(WordProbabilityPair pair : setsInTopics.get(topicId))
+			{
+				response.get(topicId)[index] = pair.wordId;
+				index++;
+			}
+		}
+		
+		return response;
+    }
 	
 	/** Odbierz i wyślij wiadomość */
 	@Override
@@ -190,6 +259,7 @@ public class LDAManager extends AbstractActor
 		return receiveBuilder()
 			.match(WorkOrderMsg.class, order -> 
 			{
+				parent = getSender();
 				dispatchSubworkers(order.getNumberOfTopics(), order.getNumberOfSyncs(), order.getHistograms());
 			})
 			.match(SyncMsg.class, sync -> 
