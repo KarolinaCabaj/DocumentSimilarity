@@ -13,6 +13,7 @@ import downloader.WikiDownloader;
 import message.StartWorkMsg;
 import message.WorkOrderMsg;
 import message.WorkResultMsg;
+import message.TerminateMsg;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import postprocessing.QualityMeasureEnum;
@@ -60,6 +61,7 @@ public class WorkManager extends AbstractActor {
                 .match(StartWorkMsg.class, this::startWork)
                 .match(WorkResultMsg.class, this::finishPrimaryWork)
                 .match(Terminated.class, this::showMustGoOn)
+                .match(TerminateMsg.class, this::finish)
                 .matchAny(o -> log.info("Received unknown message"))
                 .build();
     }
@@ -156,11 +158,13 @@ public class WorkManager extends AbstractActor {
             isLDAdone = true;
             doLda();
         }
-        if (isLSIdone && isLDAdone) {
-            getContext().getChildren().forEach(this::sayGoodBay);
-            log.notifyInfo("Work has been done");
-            context().system().terminate();
-        }
+    }
+    
+    private void finish(TerminateMsg terminated)
+    {
+		getContext().getChildren().forEach(this::sayGoodBay);
+		log.notifyInfo("Work has been done");
+		context().system().terminate();
     }
     
     private void doLda() {
@@ -169,7 +173,7 @@ public class WorkManager extends AbstractActor {
 		//stwórz manager LDA
 		ActorRef ldaManager = getContext().actorOf(LDAManager.props(), "lda-manager");
 		//wyślij polecenie startu
-		ldaManager.tell(new WorkOrderMsg(null, WorkOrderMsg.WorkType.LDA, terms, numberOfTopics, 500) , getSelf());
+		ldaManager.tell(new WorkOrderMsg(null, WorkOrderMsg.WorkType.LDA, null, numberOfTopics, 500, ldaDocumentVectors) , getSelf());
 		
     
 // 		System.out.printf("Najlepsze słowa: \n");
