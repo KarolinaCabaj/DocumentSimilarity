@@ -215,6 +215,10 @@ public class LDAManager extends AbstractActor
 		for(ActorRef actor : workersList)
 		{
 			actor.tell(new TerminateMsg(), getSelf());
+		}
+		for(ActorRef actor : workersList)
+		{
+			actor.tell(new TerminateMsg(), getSelf());
 			actor.tell(PoisonPill.getInstance(), ActorRef.noSender());
 			getContext().unwatch(actor);
 		}

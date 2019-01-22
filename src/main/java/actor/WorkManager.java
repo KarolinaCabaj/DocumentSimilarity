@@ -84,8 +84,13 @@ public class WorkManager extends AbstractActor {
         ev.showEvaluationResults(QualityMeasureEnum.GREAT);
         ev.getStandardDeviation();
 		
+		//zabij LDA managera
+		log.info("Zabijanie LDA Managera");
+		getContext().unwatch(ldaManager);
+        ldaManager.tell(PoisonPill.getInstance(), ActorRef.noSender());
+		
 		isLDAdone = true;
-		//wyślij do siebie
+		//wyjdź z programu
 		finish(new TerminateMsg());
     
     }
@@ -165,6 +170,7 @@ public class WorkManager extends AbstractActor {
 		context().system().terminate();
     }
     
+    /** Uruchom aktora LDA Manager, który zwóci nam wynik, jak skończy */
     private void doLda() {
 		//ldaDocumentVectors → histogramy do pracy LDA
 		
@@ -172,17 +178,8 @@ public class WorkManager extends AbstractActor {
 		ldaManager = getContext().actorOf(LDAManager.props(), "lda-manager");
 		//wyślij polecenie startu
 		ldaManager.tell(new WorkOrderMsg(null, WorkOrderMsg.WorkType.LDA, null, 30, 200, ldaDocumentVectors) , getSelf());
-		
-    
-
-		
-// 		RealMatrix wordsMatrix = lda.getRealMatrix();
-//         ResultEvaluator ev = new ResultEvaluator(terms, wordsMatrix, lda);
-//         ev.showAverage();
-//         ev.showEvaluationResults(QualityMeasureEnum.BAD);
-//         ev.showEvaluationResults(QualityMeasureEnum.GOOD);
-//         ev.showEvaluationResults(QualityMeasureEnum.GREAT);
-//         ev.getStandardDeviation();
+		//obserwuj jakby się popsuło
+		context().watch(ldaManager);
 		
     }
 
@@ -210,8 +207,17 @@ public class WorkManager extends AbstractActor {
     }
 
     private void showMustGoOn(Terminated terminated) {
-        String name = terminated.actor().path().name();
-        backToWork(name);
+		//sprawdź, czy to LDA się popsuło
+		if(terminated.actor() == ldaManager)
+		{
+			log.warning("LDA Manager spadł z rowerka, restartowanie");
+			doLda();
+		}
+		else
+		{
+			String name = terminated.actor().path().name();
+			backToWork(name);
+        }
     }
 
     private void backToWork(String name) {

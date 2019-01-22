@@ -4,6 +4,7 @@ import akka.event.LoggingAdapter;
 import akka.actor.Props;
 import message.WorkOrderMsg;
 import message.SyncMsg;
+import message.TerminateMsg;
 import akka.event.Logging;
 import java.util.*;
 import akka.actor.*;
@@ -25,6 +26,7 @@ public class LDAWorker extends AbstractActor
 			{
 				thisWorker.stepOnce();
 			}
+			log.info("Worker zakończył wewnętrzny wątek");
 		}
 	}
 
@@ -138,6 +140,10 @@ public class LDAWorker extends AbstractActor
 			.match(SyncMsg.class, sync ->
 			{
 				synchronize(sync, getSender()); 
+			})
+			.match(TerminateMsg.class, msg -> 
+			{
+				alive = false;
 			})
 			.build();
 	}
