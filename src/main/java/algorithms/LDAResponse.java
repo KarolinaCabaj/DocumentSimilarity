@@ -1,5 +1,7 @@
 package algorithms;
 import java.util.*;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 /** Zawiera odpowiedzi algorytmu LDA, dzięki czemu może być użyty do porównywania semantycznego wyrazów */
 public class LDAResponse
@@ -33,5 +35,20 @@ public class LDAResponse
 			importanceSum += word1Dist * word2Dist;
 		}
 		return importanceSum;
+    }
+    
+    /** Macierz używana do porównywania sematycznego, w wierszach są tematy, w kolumnach słowa */
+    public RealMatrix getRealMatrix()
+    {
+		RealMatrix response = new Array2DRowRealMatrix(histogramValuesCount, topicsPerDocument);
+		for(int topicId = 0; topicId < topicsPerDocument; topicId++)
+		{
+			for(int wordId = 0; wordId < histogramValuesCount; wordId++)
+			{
+				response.setEntry(wordId, topicId, (double)wordTopicsTable.get(wordId)[topicId] / (double)topicsSums[topicId]);
+			}
+		}
+		
+		return response;
     }
 }

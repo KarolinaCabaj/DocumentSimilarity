@@ -76,8 +76,14 @@ public class WorkManager extends AbstractActor {
 			}
 			System.out.printf("\n");
 		}
-		//zabij Workera LDA
-		ldaManager.tell(PoisonPill.getInstance(), ActorRef.noSender());
+		//przeprowadź test podobieństwa semantycznego
+        ResultEvaluator ev = new ResultEvaluator(lsiController.getTerms(), finishMsg.getLdaResponse().getRealMatrix(), finishMsg.getLdaResponse());
+        ev.showAverage();
+        ev.showEvaluationResults(QualityMeasureEnum.BAD);
+        ev.showEvaluationResults(QualityMeasureEnum.GOOD);
+        ev.showEvaluationResults(QualityMeasureEnum.GREAT);
+        ev.getStandardDeviation();
+		
 		isLDAdone = true;
 		//wyślij do siebie
 		finish(new TerminateMsg());
@@ -180,17 +186,6 @@ public class WorkManager extends AbstractActor {
 		
     }
 
-//     private void doLsi() {
-//         RealMatrix countMatrix = vectorizer.getCountMatrix(documentVectors);
-//         LSI lsi = new LSI(countMatrix, 20);
-//         RealMatrix wordsMatrix = lsi.getWordsMatrix();
-//         ResultEvaluator ev = new ResultEvaluator(terms, wordsMatrix, null);
-//         ev.showAverage();
-//         ev.showEvaluationResults(QualityMeasureEnum.BAD);
-//         ev.showEvaluationResults(QualityMeasureEnum.GOOD);
-//         ev.showEvaluationResults(QualityMeasureEnum.GREAT);
-//         ev.getStandardDeviation();
-//     }
 
     private void markOutWork(WorkResultMsg msg) {
 		//do listy, której rekordy to histogramy słów w jednym dokumencie, dodaj nowy histogram obliczony przez aktora
