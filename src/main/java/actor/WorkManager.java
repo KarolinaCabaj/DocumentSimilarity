@@ -3,24 +3,16 @@ package actor;
 import akka.actor.*;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import algorithms.LSI;
 import algorithms.LSIController;
-import algorithms.LDAManager;
-import data_preprocessing.TextPreprocessor;
-import data_preprocessing.Vectorizer;
 import downloader.UrlLoader;
 import downloader.WikiDownloader;
-import message.StartWorkMsg;
-import message.WorkOrderMsg;
-import message.WorkResultMsg;
-import message.TerminateMsg;
-import message.FinishMsg;
-import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.linear.RealVector;
-import postprocessing.QualityMeasureEnum;
+import message.*;
 import postprocessing.ResultEvaluator;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -29,10 +21,8 @@ public class WorkManager extends AbstractActor {
     private String filePath;
     private LSIController lsiController;
     private List<ActorRef> analystActors;
-    private List<String> readyBooksLDA;
-    private List<String> inProgressBooksLDA;
     private Map<String, WorkOrderMsg> workSchedule;
-	private List<int[]> ldaDocumentVectors;
+    private List<int[]> ldaDocumentVectors;
     private Boolean isLDAdone = false;
     private Integer numberOfTopics;
     private ActorRef ldaManager;
@@ -41,9 +31,10 @@ public class WorkManager extends AbstractActor {
         log = Logging.getLogger(getContext().getSystem(), this);
         workSchedule = new HashMap<>();
         ldaDocumentVectors = new ArrayList<>();
+        ldaManager = getContext().actorOf(LDAManager.props(), "lda-manager");
         analystActors = IntStream
                 .range(0, amountOfWorkers)
-                .mapToObj(n -> getContext().actorOf(Analyst.props(), "worker" + n))
+                .mapToObj(n -> getContext().actorOf(LSIAnalyst.props(), "worker" + n))
                 .collect(Collectors.toList());
         log.info("Waiting for order");
     }
@@ -63,36 +54,29 @@ public class WorkManager extends AbstractActor {
                 .matchAny(o -> log.info("Received unknown message"))
                 .build();
     }
-    
-    private void finishLda(FinishMsg finishMsg)
-    {
-		//wydrukuj wynik
-		System.out.printf("Najlepsze słowa: \n");
-		for(int[] words : finishMsg.getBestWords())
-		{
-			for(int i = 0; i < 10; i++)
-			{
-				System.out.printf("%s ", lsiController.getTerms().get(words[i]));
-			}
-			System.out.printf("\n");
-		}
-		//przeprowadź test podobieństwa semantycznego
+
+    private void finishLda(FinishMsg finishMsg) {
+        //wydrukuj wynik
+        System.out.printf("Najlepsze słowa: \n");
+        for (int[] words : finishMsg.getBestWords()) {
+            for (int i = 0; i < 10; i++) {
+                System.out.printf("%s ", lsiController.getTerms().get(words[i]));
+            }
+            System.out.printf("\n");
+        }
+        //przeprowadź test podobieństwa semantycznego
         ResultEvaluator ev = new ResultEvaluator(lsiController.getTerms(), finishMsg.getLdaResponse().getRealMatrix(), finishMsg.getLdaResponse());
-        ev.showAverage();
-        ev.showEvaluationResults(QualityMeasureEnum.BAD);
-        ev.showEvaluationResults(QualityMeasureEnum.GOOD);
-        ev.showEvaluationResults(QualityMeasureEnum.GREAT);
-        ev.getStandardDeviation();
-		
-		//zabij LDA managera
-		log.info("Zabijanie LDA Managera");
-		getContext().unwatch(ldaManager);
+        ev.evaluate();
+
+        //zabij LDA managera
+        log.info("Zabijanie LDA Managera");
+        getContext().unwatch(ldaManager);
         ldaManager.tell(PoisonPill.getInstance(), ActorRef.noSender());
-		
-		isLDAdone = true;
-		//wyjdź z programu
-		finish(new TerminateMsg());
-    
+
+        isLDAdone = true;
+        //wyjdź z programu
+        finish(new TerminateMsg());
+
     }
 
     private void startWork(StartWorkMsg msg) {
@@ -102,12 +86,9 @@ public class WorkManager extends AbstractActor {
         initBookList();
         watchAnalysts();
         for (ActorRef actor : analystActors) {
-            if (analystActors.indexOf(actor) % 2 == 0) {
-                sendLSI(actor);
-            } else {
-                sendLDA(actor);
-            }
+            sendLSI(actor);
         }
+        analystActors.add(ldaManager);
     }
 
     private void watchAnalysts() {
@@ -118,8 +99,6 @@ public class WorkManager extends AbstractActor {
         UrlLoader ul = new UrlLoader(filePath);
         String[] pages = new WikiDownloader(ul.getUrls()).getPages();
         lsiController.startLSIProcess(pages);
-        readyBooksLDA = Arrays.stream(pages).collect(Collectors.toList());
-        inProgressBooksLDA = new ArrayList<>();
     }
 
 
@@ -132,24 +111,11 @@ public class WorkManager extends AbstractActor {
         }
     }
 
-    private void sendLDA(ActorRef actor) {
-        Random rand = new Random();
-        String book = readyBooksLDA.get(rand.nextInt(readyBooksLDA.size()));
-        if (book != null) {
-            WorkOrderMsg msg = new WorkOrderMsg(book, WorkOrderMsg.WorkType.LDA, lsiController.getTerms());
-            actor.tell(msg, getSelf());
-            workSchedule.put(actor.path().name(), msg);
-            inProgressBooksLDA.add(book);
-            readyBooksLDA.remove(book);
-        }
-    }
 
     private void finishPrimaryWork(WorkResultMsg msg) {
         markOutWork(msg);
         if (!lsiController.isEmptyReadyList()) {
             sendLSI(getSender());
-        } else if (!readyBooksLDA.isEmpty()) {
-            sendLDA(getSender());
         }
         if (lsiController.isEmptyInProgressList() && lsiController.isEmptyReadyList() && !lsiController.getLSIdone() && !isLDAdone) {
             lsiController.completeLSIwork();
@@ -162,42 +128,43 @@ public class WorkManager extends AbstractActor {
             context().system().terminate();
         }
     }
-    
-    private void finish(TerminateMsg terminated)
-    {
-		getContext().getChildren().forEach(this::sayGoodBay);
-		log.notifyInfo("Work has been done");
-		context().system().terminate();
+
+    private void finish(TerminateMsg terminated) {
+        getContext().getChildren().forEach(this::sayGoodBay);
+        log.notifyInfo("Work has been done");
+        context().system().terminate();
     }
-    
-    /** Uruchom aktora LDA Manager, który zwóci nam wynik, jak skończy */
+
+    /**
+     * Uruchom aktora LDA Manager, który zwóci nam wynik, jak skończy
+     */
     private void doLda() {
-		//ldaDocumentVectors → histogramy do pracy LDA
-		
-		//stwórz manager LDA
-		ldaManager = getContext().actorOf(LDAManager.props(), "lda-manager");
-		//wyślij polecenie startu
-		ldaManager.tell(new WorkOrderMsg(null, WorkOrderMsg.WorkType.LDA, null, 30, 200, ldaDocumentVectors) , getSelf());
-		//obserwuj jakby się popsuło
-		context().watch(ldaManager);
-		
+        //ldaDocumentVectors → histogramy do pracy LDA
+
+        //wyślij polecenie startu
+        WorkOrderMsg msg = new WorkOrderMsg(null, WorkOrderMsg.WorkType.LDA, null, 30, 200, ldaDocumentVectors);
+        ldaManager.tell(msg, getSelf());
+        // zapisanie jaka prace przydzielono
+        workSchedule.put(ldaManager.path().name(), msg);
+        //obserwuj jakby się popsuło
+        context().watch(ldaManager);
+
     }
 
 
     private void markOutWork(WorkResultMsg msg) {
-		//do listy, której rekordy to histogramy słów w jednym dokumencie, dodaj nowy histogram obliczony przez aktora
+        //do listy, której rekordy to histogramy słów w jednym dokumencie, dodaj nowy histogram obliczony przez aktora
         if (msg.getWorkOrderMsg().getWorkType().equals(WorkOrderMsg.WorkType.LSI)) {
             lsiController.addDocumentVector(msg.getResult());
             lsiController.markoutJob(msg.getWorkOrderMsg().getDoc());
-        } else {
-			//przepisz tablicę double na tablicę int i dodaj to zbioru histogramów
-			int[] resultArray = new int[msg.getResult().getDimension()];
-			for(int i = 0; i < msg.getResult().getDimension(); i++) {
-				double histogramValue = msg.getResult().getEntry(i);
-				resultArray[i] = (int)histogramValue;
-			}
-			ldaDocumentVectors.add(resultArray);
-            inProgressBooksLDA.remove(msg.getWorkOrderMsg().getDoc());
+
+            //przepisz tablicę double na tablicę int i dodaj to zbioru histogramów
+            int[] resultArray = new int[msg.getResult().getDimension()];
+            for (int i = 0; i < msg.getResult().getDimension(); i++) {
+                double histogramValue = msg.getResult().getEntry(i);
+                resultArray[i] = (int) histogramValue;
+            }
+            ldaDocumentVectors.add(resultArray);
         }
     }
 
@@ -207,24 +174,15 @@ public class WorkManager extends AbstractActor {
     }
 
     private void showMustGoOn(Terminated terminated) {
-		//sprawdź, czy to LDA się popsuło
-		if(terminated.actor() == ldaManager)
-		{
-			log.warning("LDA Manager spadł z rowerka, restartowanie");
-			doLda();
-		}
-		else
-		{
-			String name = terminated.actor().path().name();
-			backToWork(name);
-        }
+        String name = terminated.actor().path().name();
+        backToWork(name);
     }
 
     private void backToWork(String name) {
         analystActors = analystActors.stream()
                 .filter(actor -> !actor.path().name().equals(name))
                 .collect(Collectors.toList());
-        ActorRef actor = getContext().actorOf(Analyst.props(), name);
+        ActorRef actor = getContext().actorOf(LSIAnalyst.props(), name);
         context().watch(actor);
         analystActors.add(actor);
         actor.tell(workSchedule.get(name), getSelf());
