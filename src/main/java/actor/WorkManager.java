@@ -40,6 +40,7 @@ public class WorkManager extends AbstractActor {
     private Boolean isLSIdone = false;
     private Boolean isLDAdone = false;
     private Integer numberOfTopics;
+    private ActorRef ldaManager;
 
     private WorkManager(Integer amountOfWorkers, Integer numberOfTopics) {
 		this.numberOfTopics = numberOfTopics;
@@ -80,6 +81,10 @@ public class WorkManager extends AbstractActor {
 			}
 			System.out.printf("\n");
 		}
+		//zabij Workera LDA
+		ldaManager.tell(PoisonPill.getInstance(), ActorRef.noSender());
+		//wyślij do siebie
+		getSelf().tell(new TerminateMsg(), getSelf());
     
     }
 
@@ -188,7 +193,7 @@ public class WorkManager extends AbstractActor {
 		//ldaDocumentVectors → histogramy do pracy LDA
 		
 		//stwórz manager LDA
-		ActorRef ldaManager = getContext().actorOf(LDAManager.props(), "lda-manager");
+		ldaManager = getContext().actorOf(LDAManager.props(), "lda-manager");
 		//wyślij polecenie startu
 		ldaManager.tell(new WorkOrderMsg(null, WorkOrderMsg.WorkType.LDA, null, 30, 200, ldaDocumentVectors) , getSelf());
 		

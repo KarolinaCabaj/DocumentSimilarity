@@ -74,11 +74,14 @@ public class LDAManager extends AbstractActor
 	/** Aktor, do którego zwracamy wynik */
 	ActorRef parent;
 	
+	Map<ActorRef, WorkOrderMsg> workerOrders;
+	
 	/** Konstruktor */
 	private LDAManager()
 	{
 		log.info("Manager LDA zrodził się");
 		workersList = new ArrayList<>();
+		workerOrders = new HashMap<>();
 	}
 	
 	/** Fabryka do konstrukcji z zewnątrz */
@@ -110,6 +113,7 @@ public class LDAManager extends AbstractActor
 		{
 			ActorRef worker = getContext().actorOf(LDAWorker.props(), "lda-worker-" + i);
 			workersList.add(worker);
+
 		}
 		//wylosuj tematy i wypełnij tabele
 		log.info("Przydzielanie wstępnych tematów");
@@ -141,7 +145,10 @@ public class LDAManager extends AbstractActor
 		for(ActorRef actor : workersList)
 		{
 			List<int[]> textOfIdsWithTopics = textsOfIdsWithTopics.get(workersList.indexOf(actor));
-			actor.tell(new WorkOrderMsg(numberOfTopics, textOfIdsWithTopics, wordTopicsTable, topicsSums) , getSelf());
+			WorkOrderMsg msg = new WorkOrderMsg(numberOfTopics, textOfIdsWithTopics, wordTopicsTable, topicsSums);
+			actor.tell(msg , getSelf());
+			context().watch(actor);
+			workerOrders.put(actor, msg);
 		}
 		log.info("Rozpoczynanie synchronizacji");
 		for(ActorRef actor : workersList)
@@ -251,6 +258,19 @@ public class LDAManager extends AbstractActor
 		
 		return response;
     }
+    
+    /** Zrestartuj pracownika */
+    private void restartWorker(Terminated msg)
+    {
+		ActorRef brokenWorker = msg.actor();
+		WorkOrderMsg order = workerOrders.get(brokenWorker);
+		workerOrders.remove(brokenWorker);
+		ActorRef newWorker = getContext().actorOf(LDAWorker.props(), brokenWorker.path().name());
+		workersList.set(workersList.indexOf(brokenWorker), newWorker);
+		synchronizations[workersList.indexOf(brokenWorker)] = 0;
+		workerOrders.put(newWorker, order);
+		log.warning("Zrestartowano aktora " + brokenWorker.path().name());
+    }
 	
 	/** Odbierz i wyślij wiadomość */
 	@Override
@@ -266,6 +286,7 @@ public class LDAManager extends AbstractActor
 			{
 				syncTables(sync, getSender());
 			})
+			.match(Terminated.class, this::restartWorker)
 			.build();
 	}
 
