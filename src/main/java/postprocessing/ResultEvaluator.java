@@ -119,4 +119,12 @@ public class ResultEvaluator {
         System.out.println("stdDev: " + stdDev);
         return stdDev;
     }
+
+    public void evaluate(){
+        showAverage();
+        showEvaluationResults(QualityMeasureEnum.BAD);
+        showEvaluationResults(QualityMeasureEnum.GOOD);
+        showEvaluationResults(QualityMeasureEnum.GREAT);
+        getStandardDeviation();
+    }
 }

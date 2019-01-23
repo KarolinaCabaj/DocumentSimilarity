@@ -1,6 +1,6 @@
-package algorithms;
+package actor;
 import akka.actor.*;
-import algorithms.LDAWorker;
+import actor.LDAWorker;
 import akka.actor.AbstractActor;
 import akka.event.LoggingAdapter;
 import akka.actor.Props;
@@ -9,6 +9,7 @@ import message.SyncMsg;
 import message.TerminateMsg;
 import message.FinishMsg;
 import akka.event.Logging;
+import algorithms.LDAResponse;
 import java.util.*;
 import java.lang.*;
 import java.lang.IllegalArgumentException;

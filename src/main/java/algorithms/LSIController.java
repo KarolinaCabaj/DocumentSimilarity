@@ -4,7 +4,6 @@ import data_preprocessing.TextPreprocessor;
 import data_preprocessing.Vectorizer;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
-import postprocessing.QualityMeasureEnum;
 import postprocessing.ResultEvaluator;
 
 import java.util.ArrayList;
@@ -73,11 +72,7 @@ public class LSIController {
         LSI lsi = new LSI(countMatrix, 20);
         RealMatrix wordsMatrix = lsi.getWordsMatrix();
         ResultEvaluator ev = new ResultEvaluator(terms, wordsMatrix, null);
-        ev.showAverage();
-        ev.showEvaluationResults(QualityMeasureEnum.BAD);
-        ev.showEvaluationResults(QualityMeasureEnum.GOOD);
-        ev.showEvaluationResults(QualityMeasureEnum.GREAT);
-        ev.getStandardDeviation();
+        ev.evaluate();
     }
 
     public Boolean getLSIdone() {

@@ -1,4 +1,4 @@
-package algorithms;
+package actor;
 import akka.actor.AbstractActor;
 import akka.event.LoggingAdapter;
 import akka.actor.Props;
@@ -54,7 +54,7 @@ public class LDAWorker extends AbstractActor
 	/** Mutez do synchronizacji */
 	private Object mutex = new Object();
 	/** Wątek przeliczania */
-	StepThread stepThread;
+	private StepThread stepThread;
 	
 	/** Konstruktor */
 	private LDAWorker()
