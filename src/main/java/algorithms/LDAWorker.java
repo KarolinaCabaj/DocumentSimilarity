@@ -27,6 +27,7 @@ public class LDAWorker extends AbstractActor
 				thisWorker.stepOnce();
 			}
 			log.info("Worker zakończył wewnętrzny wątek");
+			//teraz dopiero jest bezpiecznie zabić tego aktora
 		}
 	}
 
@@ -52,6 +53,9 @@ public class LDAWorker extends AbstractActor
 	private int synchronizationCount;
 	/** Mutez do synchronizacji */
 	private Object mutex = new Object();
+	/** Wątek przeliczania */
+	StepThread stepThread;
+	
 	/** Konstruktor */
 	private LDAWorker()
 	{
@@ -75,6 +79,7 @@ public class LDAWorker extends AbstractActor
 		this.documentTopicVector = new int[numberOfTopics];
 		this.alive = true;
 		this.numberOfTopics = numberOfTopics;
+		this.stepThread = new StepThread(this);
 		
 		//przepisz argumenty na tablicę i wypełnij tablice operacyjne
 		//dla każdej pary w dokumencie
@@ -90,8 +95,7 @@ public class LDAWorker extends AbstractActor
 		
 		//rób wszystko w osobnym wątku
 		//ponieważ i tak wszystko działa na zasadzie prawdopodobieństw, wyścigi nie bardzo mają wpływ (chyba)
-		StepThread thread = new StepThread(this);
-		thread.start();
+// 		stepThread.start();
 	}
 	
 	/** Odbierz wiadomość synchronizacyjną, połącz dane i wyślij swoje w odpowiedzi */
@@ -144,6 +148,7 @@ public class LDAWorker extends AbstractActor
 			.match(TerminateMsg.class, msg -> 
 			{
 				alive = false;
+				stepThread.join();
 			})
 			.build();
 	}
@@ -193,6 +198,11 @@ public class LDAWorker extends AbstractActor
 		{
 			for(int[] pair : document)
 			{
+				if(!alive)
+				{
+					return;
+				}
+				
 				int wordId = pair[0];
 				int oldTopicId = pair[1];
 			

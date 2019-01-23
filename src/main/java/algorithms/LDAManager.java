@@ -11,6 +11,7 @@ import message.FinishMsg;
 import akka.event.Logging;
 import java.util.*;
 import java.lang.*;
+import java.lang.IllegalArgumentException;
 
 /** Zarządza i rozdaje aktorów algorytmu LDA */
 public class LDAManager extends AbstractActor
@@ -93,11 +94,28 @@ public class LDAManager extends AbstractActor
 	/** Rozstaw pracowników **/
 	private void dispatchSubworkers(int numberOfTopics, int numberOfSyncs, List<int[]> histograms)
 	{
+		if(histograms == null)
+		{
+			throw new IllegalArgumentException("Podane histogramy są null");
+		}
 		final int numberOfWorkers = histograms.size();
 		this.synchronizations = new int[numberOfWorkers];
 		this.numberOfTopics = numberOfTopics;
 		this.numberOfSyncs = numberOfSyncs;
 		log.info("Rozstawianie " + numberOfWorkers + " pracowników na " + numberOfTopics + " tematów przy " + numberOfSyncs + " synchronizajach");
+		
+		if(this.numberOfTopics <= 0)
+		{
+			throw new IllegalArgumentException("Ilość pracowników jest nieprawidłowa: " + this.numberOfTopics);
+		}
+		else if(this.numberOfSyncs <= 0)
+		{
+			throw new IllegalArgumentException("Ilość synchronizacji jest nieprawidłowa: " + this.numberOfSyncs);
+		}
+		else if(numberOfWorkers <= 0)
+		{
+			throw new IllegalArgumentException("Histogram nie zawiera żadnych danych");
+		}
 		
 		//tablica słowa ↔ tematy
 		this.wordTopicsTable = new ArrayList<>();
@@ -214,10 +232,7 @@ public class LDAManager extends AbstractActor
 		isFinished = true;
 		for(ActorRef actor : workersList)
 		{
-			actor.tell(new TerminateMsg(), getSelf());
-		}
-		for(ActorRef actor : workersList)
-		{
+			//TerminateMsg zakończy wątki w Workerach
 			actor.tell(new TerminateMsg(), getSelf());
 			actor.tell(PoisonPill.getInstance(), ActorRef.noSender());
 			getContext().unwatch(actor);
@@ -267,14 +282,17 @@ public class LDAManager extends AbstractActor
     /** Zrestartuj pracownika */
     private void restartWorker(Terminated msg)
     {
-		ActorRef brokenWorker = msg.actor();
-		WorkOrderMsg order = workerOrders.get(brokenWorker);
-		workerOrders.remove(brokenWorker);
-		ActorRef newWorker = getContext().actorOf(LDAWorker.props(), brokenWorker.path().name());
-		workersList.set(workersList.indexOf(brokenWorker), newWorker);
-		synchronizations[workersList.indexOf(brokenWorker)] = 0;
-		workerOrders.put(newWorker, order);
-		log.warning("Zrestartowano aktora " + brokenWorker.path().name());
+		if(!isFinished)
+		{
+			ActorRef brokenWorker = msg.actor();
+			WorkOrderMsg order = workerOrders.get(brokenWorker);
+			workerOrders.remove(brokenWorker);
+			ActorRef newWorker = getContext().actorOf(LDAWorker.props(), brokenWorker.path().name());
+			workersList.set(workersList.indexOf(brokenWorker), newWorker);
+			synchronizations[workersList.indexOf(brokenWorker)] = 0;
+			workerOrders.put(newWorker, order);
+			log.warning("Zrestartowano aktora " + brokenWorker.path().name());
+		}
     }
 	
 	/** Odbierz i wyślij wiadomość */
